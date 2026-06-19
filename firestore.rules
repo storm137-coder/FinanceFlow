@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can only access their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // All other collections: user can only access docs where uid == auth.uid
+    match /{collection}/{docId} {
+      // Allow create if the incoming document's uid matches the authenticated user
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+
+      // Allow read, update, delete if the existing document's uid matches the authenticated user
+      allow read, update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+  }
+}

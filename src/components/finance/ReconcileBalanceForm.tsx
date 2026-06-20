@@ -140,11 +140,11 @@ export function ReconcileBalanceForm({
       </div>
 
       {differenceMinorUnits !== 0 && (
-        <div className="text-sm border border-border p-3 rounded bg-background">
-          Adjustment Amount:{' '}
-          <span className={`font-semibold ${differenceMinorUnits > 0 ? 'text-positive' : 'text-negative'}`}>
+        <div className="text-sm border border-border p-3 rounded bg-background overflow-hidden">
+          <p className="text-muted-foreground mb-1">Adjustment Amount:</p>
+          <p className={`font-semibold break-all ${differenceMinorUnits > 0 ? 'text-positive' : 'text-negative'}`}>
             {differenceMinorUnits > 0 ? '+' : ''}{formatCurrency(differenceMinorUnits, displayCurrency)}
-          </span>
+          </p>
         </div>
       )}
 

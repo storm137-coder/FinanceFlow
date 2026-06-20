@@ -1,50 +1,54 @@
 'use client';
 
-import { Card } from '@/components/ui/Card';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
-import { formatCurrency } from '@/lib/utils';
-import { useAuth } from '@/hooks/useAuth';
-
-interface CategoryData {
-  name: string;
-  value: number;
-  color: string;
-}
+import React, { useMemo } from 'react';
+import { Card } from '@/components/ui/card';
+import { Transaction } from '@/types';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { formatCurrency } from '@/lib/currency';
+import { EXPENSE_CATEGORIES } from '@/lib/constants';
 
 interface CategoryChartsProps {
-  expensesByCategory: CategoryData[];
-  topCategories: CategoryData[];
+  transactions: Transaction[];
+  currency: string;
 }
 
-export function CategoryCharts({ expensesByCategory, topCategories }: CategoryChartsProps) {
-  const { user } = useAuth();
-  const currency = user?.currency || 'USD';
+export function CategoryCharts({ transactions, currency }: CategoryChartsProps) {
+  
+  const categoryData = useMemo(() => {
+    const expenses = transactions.filter(t => t.type === 'expense');
+    const categoryTotals = new Map<string, number>();
+
+    expenses.forEach(t => {
+      const amount = t.amountMinorUnits / 100;
+      categoryTotals.set(t.categoryId, (categoryTotals.get(t.categoryId) || 0) + amount);
+    });
+
+    const data = Array.from(categoryTotals.entries())
+      .map(([name, value]) => {
+        const catConfig = EXPENSE_CATEGORIES.find(c => c.value === name);
+        return {
+          name: catConfig ? catConfig.label : name,
+          value,
+          color: catConfig ? catConfig.color : '#94a3b8'
+        };
+      })
+      .sort((a, b) => b.value - a.value);
+
+    return data;
+  }, [transactions]);
+
+  const topCategories = useMemo(() => {
+    return categoryData.slice(0, 5);
+  }, [categoryData]);
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
       return (
-        <div className="glass-panel p-3 rounded-lg shadow-lg border border-white/10 flex items-center gap-2">
-          <div 
-            className="w-3 h-3 rounded-full" 
-            style={{ backgroundColor: data.color || payload[0].color }}
-          />
-          <span className="text-white/70">{data.name}:</span>
-          <span className="text-white font-medium">
+        <div className="bg-surface border border-border p-3 rounded-lg shadow-lg">
+          <p className="font-medium text-foreground">{payload[0].name}</p>
+          <p className="text-sm text-ink-muted">
             {formatCurrency(payload[0].value, currency)}
-          </span>
+          </p>
         </div>
       );
     }
@@ -52,85 +56,57 @@ export function CategoryCharts({ expensesByCategory, topCategories }: CategoryCh
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card className="glass-panel border-white/10 p-6 flex flex-col items-center">
-        <h3 className="text-lg font-semibold text-white mb-6 self-start">Expenses by Category</h3>
-        <div className="w-full flex-1 min-h-[300px] flex items-center justify-center">
-          {expensesByCategory.length > 0 ? (
+    <Card className="p-6">
+      <h3 className="text-h3 font-display text-foreground mb-6">Spending by Category</h3>
+      
+      {categoryData.length === 0 ? (
+        <div className="h-72 flex items-center justify-center text-ink-muted">
+          No expenses for this period.
+        </div>
+      ) : (
+        <div className="space-y-8">
+          <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={expensesByCategory}
+                  data={categoryData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={80}
-                  outerRadius={120}
-                  paddingAngle={5}
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={2}
                   dataKey="value"
-                  stroke="none"
                 >
-                  {expensesByCategory.map((entry, index) => (
+                  {categoryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
-                <Legend 
-                  layout="vertical" 
-                  verticalAlign="middle" 
-                  align="right"
-                  wrapperStyle={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}
-                />
+                <Legend layout="vertical" verticalAlign="middle" align="right" />
               </PieChart>
             </ResponsiveContainer>
-          ) : (
-            <div className="text-white/50 text-sm">No expense data available</div>
-          )}
-        </div>
-      </Card>
+          </div>
 
-      <Card className="glass-panel border-white/10 p-6 flex flex-col">
-        <h3 className="text-lg font-semibold text-white mb-6">Top Spending Categories</h3>
-        <div className="flex-1 min-h-[300px]">
-          {topCategories.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart 
-                data={topCategories} 
-                layout="vertical"
-                margin={{ top: 0, right: 30, left: 40, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={true} vertical={false} />
-                <XAxis 
-                  type="number" 
-                  stroke="#ffffff50" 
-                  fontSize={12} 
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `$${value}`}
-                />
-                <YAxis 
-                  type="category" 
-                  dataKey="name" 
-                  stroke="#ffffff50" 
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  width={80}
-                />
-                <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} content={<CustomTooltip />} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={30}>
-                  {topCategories.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex h-full items-center justify-center text-white/50 text-sm">
-              No expense data available
+          <div>
+            <h4 className="text-body font-medium text-foreground mb-4">Top 5 Categories</h4>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topCategories} layout="vertical" margin={{ top: 0, right: 0, left: 30, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
+                  <XAxis type="number" hide />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--ink-muted))' }} width={80} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--surface-sunken))' }} />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                    {topCategories.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
-          )}
+          </div>
         </div>
-      </Card>
-    </div>
+      )}
+    </Card>
   );
 }

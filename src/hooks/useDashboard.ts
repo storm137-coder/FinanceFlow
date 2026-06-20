@@ -1,117 +1,66 @@
-'use client';
-
-import { useState, useMemo } from 'react';
-import { useCollection } from '@/hooks/useCollection';
-import type { Transaction, Goal, Budget, Bill, Investment, Loan, WishlistItem } from '@/types';
+import { useMemo } from 'react';
+import { useAccounts } from './useAccounts';
+import { useTransactions } from './useTransactions';
+import { startOfMonth, isAfter } from 'date-fns';
+import { Transaction } from '@/types';
 
 export function useDashboard() {
-  const { data: transactions, loading: txLoading } = useCollection<Transaction>('transactions');
-  const { data: goals, loading: goalsLoading } = useCollection<Goal>('goals');
-  const { data: budgets, loading: budgetsLoading } = useCollection<Budget>('budgets');
-  const { data: bills, loading: billsLoading } = useCollection<Bill>('bills');
-  const { data: investments, loading: investmentsLoading } = useCollection<Investment>('investments');
-  const { data: loans, loading: loansLoading } = useCollection<Loan>('loans');
+  const { data: accounts, isLoading: accountsLoading } = useAccounts();
+  const { data: transactionsData, isLoading: transactionsLoading } = useTransactions();
 
-  const loading = txLoading || goalsLoading || budgetsLoading || billsLoading || investmentsLoading || loansLoading;
+  const transactions = useMemo(() => {
+    return transactionsData?.pages.flatMap(page => page.transactions) || [];
+  }, [transactionsData]);
 
   const stats = useMemo(() => {
-    const now = new Date();
-    const thisMonth = now.getMonth();
-    const thisYear = now.getFullYear();
-    const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
-    const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+    let totalBalanceMinorUnits = 0;
+    
+    // Default to USD for the display currency if no accounts, otherwise pick the first account's currency
+    const displayCurrency = accounts && accounts.length > 0 ? accounts[0].currency : 'USD';
 
-    const thisMonthTx = transactions.filter(t => {
-      const d = new Date(t.date);
-      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+    if (accounts) {
+      totalBalanceMinorUnits = accounts.reduce((acc, account) => acc + account.balanceMinorUnits, 0);
+    }
+
+    const monthStart = startOfMonth(new Date());
+    
+    let monthlyIncomeMinorUnits = 0;
+    let monthlyExpenseMinorUnits = 0;
+    const categorySpend: Record<string, number> = {};
+
+    transactions.forEach((tx: Transaction) => {
+      const txDate = new Date(tx.date);
+      if (isAfter(txDate, monthStart)) {
+        if (tx.type === 'income') {
+          monthlyIncomeMinorUnits += tx.amountMinorUnits;
+        } else if (tx.type === 'expense') {
+          monthlyExpenseMinorUnits += tx.amountMinorUnits;
+          
+          // Aggregate for pie chart
+          if (!categorySpend[tx.categoryId]) {
+            categorySpend[tx.categoryId] = 0;
+          }
+          categorySpend[tx.categoryId] += tx.amountMinorUnits;
+        }
+      }
     });
 
-    const lastMonthTx = transactions.filter(t => {
-      const d = new Date(t.date);
-      return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
-    });
-
-    const totalIncome = thisMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const totalExpenses = thisMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    const lastIncome = lastMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const lastExpenses = lastMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-
-    const incomeChange = lastIncome > 0 ? ((totalIncome - lastIncome) / lastIncome) * 100 : 0;
-    const expenseChange = lastExpenses > 0 ? ((totalExpenses - lastExpenses) / lastExpenses) * 100 : 0;
+    const spendByCategory = Object.entries(categorySpend)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
 
     return {
-      totalBalance: totalIncome - totalExpenses,
-      totalIncome,
-      totalExpenses,
-      totalSavings: totalIncome - totalExpenses,
-      incomeChange: Math.round(incomeChange),
-      expenseChange: Math.round(expenseChange),
-      savingsChange: 0,
+      totalBalanceMinorUnits,
+      displayCurrency,
+      monthlyIncomeMinorUnits,
+      monthlyExpenseMinorUnits,
+      spendByCategory,
+      recentTransactions: transactions.slice(0, 5), // Top 5
     };
-  }, [transactions]);
-
-  const recentTransactions = useMemo(() =>
-    [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10),
-    [transactions]
-  );
-
-  const upcomingBills = useMemo(() => {
-    const now = new Date();
-    const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    return bills.filter(b => {
-      if (b.status === 'paid') return false;
-      const due = new Date(b.dueDate);
-      return due <= weekLater;
-    }).sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-  }, [bills]);
-
-  const monthlyData = useMemo(() => {
-    const now = new Date();
-    const months: { name: string; income: number; expenses: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const m = d.getMonth();
-      const y = d.getFullYear();
-      const monthTx = transactions.filter(t => {
-        const td = new Date(t.date);
-        return td.getMonth() === m && td.getFullYear() === y;
-      });
-      months.push({
-        name: d.toLocaleDateString('en', { month: 'short' }),
-        income: monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
-        expenses: monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
-      });
-    }
-    return months;
-  }, [transactions]);
-
-  const categoryData = useMemo(() => {
-    const now = new Date();
-    const thisMonth = now.getMonth();
-    const thisYear = now.getFullYear();
-    const expenses = transactions.filter(t => {
-      const d = new Date(t.date);
-      return t.type === 'expense' && d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-    });
-    const catMap: Record<string, number> = {};
-    expenses.forEach(t => {
-      catMap[t.category] = (catMap[t.category] || 0) + t.amount;
-    });
-    return Object.entries(catMap).map(([name, value]) => ({ name, value }));
-  }, [transactions]);
+  }, [accounts, transactions]);
 
   return {
-    loading,
-    stats,
-    recentTransactions,
-    upcomingBills,
-    monthlyData,
-    categoryData,
-    transactions,
-    goals,
-    budgets,
-    bills,
-    investments,
-    loans,
+    ...stats,
+    isLoading: accountsLoading || transactionsLoading,
   };
 }

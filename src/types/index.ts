@@ -1,22 +1,37 @@
-export interface Transaction {
+export interface Account {
   id: string;
-  uid: string;
-  type: 'income' | 'expense';
-  amount: number;
-  category: string;
-  merchant?: string;
-  source?: string;
-  description?: string;
-  date: string;
-  time?: string;
-  notes?: string;
-  paymentMethod: string;
-  tags?: string[];
-  recurring: boolean;
-  recurringType?: 'daily' | 'weekly' | 'monthly' | 'yearly';
-  receiptUrl?: string;
+  name: string;
+  type: 'checking' | 'savings' | 'credit' | 'cash';
+  currency: string;
+  balanceMinorUnits: number;
+  archivedAt?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Transaction {
+  id: string;
+  accountId: string;
+  type: 'income' | 'expense' | 'transfer';
+  amountMinorUnits: number;
+  currency: string;
+  categoryId: string;
+  merchant?: string;
+  date: string;
+  tags?: string[];
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  kind: 'income' | 'expense';
+  isSystemDefault: boolean;
+  createdAt: string;
 }
 
 export interface Goal {
@@ -24,8 +39,8 @@ export interface Goal {
   uid: string;
   name: string;
   description?: string;
-  targetAmount: number;
-  currentAmount: number;
+  targetMinorUnits: number;
+  currentMinorUnits: number;
   category: string;
   priority: 'low' | 'medium' | 'high';
   deadline: string;
@@ -39,8 +54,8 @@ export interface Budget {
   id: string;
   uid: string;
   category: string;
-  amount: number;
-  spent: number;
+  amountMinorUnits: number;
+  spentMinorUnits: number;
   month: number;
   year: number;
   createdAt: string;
@@ -68,8 +83,8 @@ export interface Investment {
   uid: string;
   name: string;
   type: 'stocks' | 'bonds' | 'mutual_funds' | 'etf' | 'crypto' | 'real_estate' | 'gold' | 'other';
-  investedAmount: number;
-  currentValue: number;
+  investedAmountMinorUnits: number;
+  currentValueMinorUnits: number;
   purchaseDate: string;
   broker?: string;
   notes?: string;
@@ -81,10 +96,10 @@ export interface Loan {
   id: string;
   uid: string;
   name: string;
-  borrowedAmount: number;
-  remainingAmount: number;
+  borrowedAmountMinorUnits: number;
+  remainingAmountMinorUnits: number;
   interestRate: number;
-  monthlyEmi: number;
+  monthlyEmiMinorUnits: number;
   startDate: string;
   endDate: string;
   paidInstallments: number;
@@ -99,7 +114,7 @@ export interface WishlistItem {
   id: string;
   uid: string;
   name: string;
-  price: number;
+  priceMinorUnits: number;
   priority: 'low' | 'medium' | 'high';
   status: 'planned' | 'saving' | 'purchased' | 'cancelled';
   imageUrl?: string;

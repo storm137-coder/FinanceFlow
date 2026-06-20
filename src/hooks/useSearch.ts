@@ -18,9 +18,8 @@ export function useSearch() {
     const q = query.toLowerCase();
     return {
       transactions: transactions.filter(t =>
-        t.category?.toLowerCase().includes(q) ||
+        t.categoryId?.toLowerCase().includes(q) ||
         t.merchant?.toLowerCase().includes(q) ||
-        t.source?.toLowerCase().includes(q) ||
         t.notes?.toLowerCase().includes(q)
       ),
       goals: goals.filter(g => g.name.toLowerCase().includes(q) || g.description?.toLowerCase().includes(q)),

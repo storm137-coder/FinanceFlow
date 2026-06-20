@@ -1,87 +1,155 @@
-import React from 'react';
-import RegisterForm from '@/components/auth/RegisterForm';
-import { HiOutlineLightBulb, HiOutlineArrowTrendingUp, HiOutlineGlobeAlt } from 'react-icons/hi2';
+'use client';
 
-export const metadata = {
-  title: 'Register | FinanceFlow',
-  description: 'Create your FinanceFlow account',
-};
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { registerSchema, RegisterFormData } from '@/validations/schemas';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
+import { CURRENCIES } from '@/lib/constants';
 
 export default function RegisterPage() {
+  const { register } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      displayName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      currency: 'USD',
+    },
+  });
+
+  const onSubmit = async (data: RegisterFormData) => {
+    try {
+      setIsLoading(true);
+      await register(data.email, data.password, data.displayName, data.currency);
+      toast.success('Account created! Please check your email to verify.');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create account');
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex w-full">
-      {/* Left Panel (Hidden on small screens) */}
-      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white p-12 flex-col justify-between relative overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white to-transparent" />
-        
-        <div className="relative z-10">
-          <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-              <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-pink-500 bg-clip-text text-transparent">
-                F
-              </span>
-            </div>
-            <span className="text-2xl font-bold tracking-tight">FinanceFlow</span>
-          </div>
-          
-          <div className="mt-24 max-w-lg">
-            <h1 className="text-5xl font-bold leading-tight mb-6">
-              Start your journey to <br />
-              <span className="text-indigo-200">financial freedom.</span>
-            </h1>
-            <p className="text-lg text-indigo-100 mb-12">
-              Sign up today and get access to powerful tools designed to help you save more, spend smarter, and build wealth.
-            </p>
-
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                  <HiOutlineLightBulb className="w-6 h-6 text-indigo-100" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Smart Insights</h3>
-                  <p className="text-indigo-100/80">AI-driven recommendations for your portfolio.</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                  <HiOutlineArrowTrendingUp className="w-6 h-6 text-indigo-100" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Growth Tracking</h3>
-                  <p className="text-indigo-100/80">Monitor your net worth and investment growth over time.</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                  <HiOutlineGlobeAlt className="w-6 h-6 text-indigo-100" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">Multi-currency Support</h3>
-                  <p className="text-indigo-100/80">Track accounts across different countries and currencies.</p>
-                </div>
-              </div>
-            </div>
-          </div>
+    <Card className="border-border bg-card shadow-sm">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-display">Create an account</CardTitle>
+        <CardDescription>
+          Enter your details below to create your account
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="displayName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Doe" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="name@example.com" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="currency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Default Currency</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a currency" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {CURRENCIES.map((currency) => (
+                        <SelectItem key={currency.value} value={currency.value}>
+                          {currency.value} ({currency.symbol})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create Account
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+      <CardFooter>
+        <div className="text-sm text-center w-full text-muted">
+          Already have an account?{' '}
+          <Link href="/login" className="text-primary hover:underline font-medium">
+            Sign in
+          </Link>
         </div>
-      </div>
-
-      {/* Right Panel */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-8">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden flex items-center justify-center space-x-2 mb-12">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-pink-500 rounded-xl flex items-center justify-center">
-              <span className="text-2xl font-bold text-white">
-                F
-              </span>
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">FinanceFlow</span>
-          </div>
-          
-          <RegisterForm />
-        </div>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 }

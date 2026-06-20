@@ -1,238 +1,223 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useCollection } from '@/hooks/useCollection';
-import { useAuth } from '@/hooks/useAuth';
-import type { Transaction } from '@/types';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import { EXPENSE_CATEGORIES } from '@/lib/constants';
-import toast from 'react-hot-toast';
-import { 
-  HiOutlineDocumentArrowDown, 
-  HiOutlineDocumentText, 
-  HiOutlineTableCells,
-  HiOutlineChartPie
-} from 'react-icons/hi2';
-import { format, subDays, startOfMonth, endOfMonth, isAfter, isBefore, parseISO } from 'date-fns';
-
-type ReportPeriod = 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useAccounts } from '@/hooks/useAccounts';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatCurrency } from '@/lib/currency';
+import { exportToCSV } from '@/lib/csv';
+import { FileText, Download, FileSpreadsheet, Filter } from 'lucide-react';
+import { format, subDays, subMonths, startOfYear, isAfter, isBefore } from 'date-fns';
 
 export default function ReportsPage() {
-  const { user } = useAuth();
-  const [period, setPeriod] = useState<ReportPeriod>('monthly');
-  const [isExporting, setIsExporting] = useState(false);
+  const { data, isLoading } = useTransactions();
+  const { data: accounts } = useAccounts();
+  const [dateRange, setDateRange] = useState('30days');
+  const [reportType, setReportType] = useState('transactions');
 
-  const { data: transactions, loading } = useCollection<Transaction>('transactions');
+  const defaultCurrency = accounts?.[0]?.currency || 'USD';
 
-  const currency = user?.currency || 'USD';
+  // Filter transactions based on date range
+  const filteredTransactions = useMemo(() => {
+    const transactions = data?.pages.flatMap(page => page.transactions) || [];
+    if (!transactions.length) return [];
+    
+    const now = new Date();
+    let startDate: Date;
 
-  const reportData = useMemo(() => {
-    if (!transactions) return null;
-
-    let startDate = new Date();
-    const endDate = new Date();
-
-    switch (period) {
-      case 'weekly':
-        startDate = subDays(endDate, 7);
-        break;
-      case 'monthly':
-        startDate = startOfMonth(endDate);
-        break;
-      case 'quarterly':
-        startDate = subDays(endDate, 90);
-        break;
-      case 'yearly':
-        startDate = subDays(endDate, 365);
-        break;
-      case 'custom':
-        startDate = startOfMonth(endDate);
-        break;
+    switch (dateRange) {
+      case '7days': startDate = subDays(now, 7); break;
+      case '30days': startDate = subDays(now, 30); break;
+      case '90days': startDate = subDays(now, 90); break;
+      case 'thisYear': startDate = startOfYear(now); break;
+      case 'allTime': 
+      default:
+        startDate = new Date(0); // 1970
     }
 
-    const filtered = transactions.filter(tx => {
-      const d = parseISO(tx.date);
-      return isAfter(d, startDate) && isBefore(d, endDate);
-    });
+    return transactions
+      .filter(t => isAfter(new Date(t.date), startDate))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [data, dateRange]);
 
-    let income = 0;
-    let expenses = 0;
-    const catTotals: Record<string, number> = {};
+  // Calculate summaries
+  const { totalIncome, totalExpense } = useMemo(() => {
+    return filteredTransactions.reduce(
+      (acc, t) => {
+        if (t.type === 'income') acc.totalIncome += t.amountMinorUnits;
+        if (t.type === 'expense') acc.totalExpense += t.amountMinorUnits;
+        return acc;
+      },
+      { totalIncome: 0, totalExpense: 0 }
+    );
+  }, [filteredTransactions]);
 
-    filtered.forEach(tx => {
-      if (tx.type === 'income') {
-        income += tx.amount;
-      } else {
-        expenses += tx.amount;
-        catTotals[tx.category] = (catTotals[tx.category] || 0) + tx.amount;
-      }
-    });
+  const handleExportCSV = () => {
+    const data = filteredTransactions.map(t => ({
+      Date: format(new Date(t.date), 'yyyy-MM-dd'),
+      Type: t.type.toUpperCase(),
+      Category: t.categoryId,
+      Amount: (t.amountMinorUnits / 100).toFixed(2), // convert minor units for export
+      Currency: t.currency,
+      Merchant: t.merchant || '',
+      Notes: t.notes || '',
+    }));
 
-    const topCategories = Object.entries(catTotals)
-      .map(([cat, amt]) => {
-        const def = EXPENSE_CATEGORIES.find(c => c.value === cat);
-        return {
-          name: def ? def.label : cat,
-          amount: amt
-        };
-      })
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5);
-
-    return {
-      txCount: filtered.length,
-      income,
-      expenses,
-      net: income - expenses,
-      topCategories,
-      startDate,
-      endDate
-    };
-  }, [transactions, period]);
-
-  const handleExport = async (type: 'pdf' | 'csv' | 'excel') => {
-    setIsExporting(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success(`${type.toUpperCase()} report generated successfully`);
-    } catch (error) {
-      toast.error('Failed to generate report');
-    } finally {
-      setIsExporting(false);
-    }
+    exportToCSV(data, `financeflow-${dateRange}-transactions`);
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-[400px] w-full" />
-      </div>
-    );
-  }
+  const handleExportPDF = () => {
+    // Generate PDF server-side to adhere to design system
+    const url = `/api/reports/export?dateRange=${dateRange}&reportType=${reportType}`;
+    window.open(url, '_blank');
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Reports</h1>
-          <p className="text-white/60 text-sm mt-1">Generate and export financial reports</p>
-        </div>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-display font-display text-foreground">Reports & Exports</h1>
+        <p className="text-muted-foreground mt-1">Generate summaries and export your data for tax or record keeping.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="glass-panel p-6 border-white/10 space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-2">Report Period</label>
-              <select
-                value={period}
-                onChange={(e) => setPeriod(e.target.value as ReportPeriod)}
-                className="w-full bg-white/5 border border-white/10 text-white rounded-lg p-2.5 focus:ring-primary-500 focus:border-primary-500 outline-none"
-              >
-                <option value="weekly" className="bg-slate-900">Last 7 Days</option>
-                <option value="monthly" className="bg-slate-900">This Month</option>
-                <option value="quarterly" className="bg-slate-900">Last 90 Days</option>
-                <option value="yearly" className="bg-slate-900">Last 365 Days</option>
-              </select>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Configuration Panel */}
+        <div className="md:col-span-1 space-y-6">
+          <div className="bg-card border border-border rounded-lg p-6 shadow-sm space-y-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Filter className="w-5 h-5 text-primary" />
+              <h2 className="font-semibold text-lg">Report Settings</h2>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Data Type</label>
+              <Select value={reportType} onValueChange={setReportType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="transactions">Transactions</SelectItem>
+                  <SelectItem value="budgets" disabled>Budgets (Coming Soon)</SelectItem>
+                  <SelectItem value="investments" disabled>Investments (Coming Soon)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="pt-4 border-t border-white/10 space-y-3">
-              <p className="text-sm font-medium text-white/80 mb-2">Export Options</p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date Range</label>
+              <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7days">Last 7 Days</SelectItem>
+                  <SelectItem value="30days">Last 30 Days</SelectItem>
+                  <SelectItem value="90days">Last 90 Days</SelectItem>
+                  <SelectItem value="thisYear">This Year</SelectItem>
+                  <SelectItem value="allTime">All Time</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="pt-4 border-t border-border space-y-3">
               <Button 
-                variant="outline" 
-                className="w-full justify-start gap-3 bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
-                onClick={() => handleExport('pdf')}
-                disabled={isExporting || !reportData?.txCount}
+                onClick={handleExportPDF} 
+                className="w-full justify-start"
+                disabled={isLoading || filteredTransactions.length === 0}
               >
-                <HiOutlineDocumentText className="w-5 h-5 text-rose-400" />
-                Export as PDF
+                <FileText className="w-4 h-4 mr-2" />
+                Download PDF Report
               </Button>
               <Button 
+                onClick={handleExportCSV} 
                 variant="outline" 
-                className="w-full justify-start gap-3 bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
-                onClick={() => handleExport('csv')}
-                disabled={isExporting || !reportData?.txCount}
+                className="w-full justify-start"
+                disabled={isLoading || filteredTransactions.length === 0}
               >
-                <HiOutlineTableCells className="w-5 h-5 text-emerald-400" />
-                Export as CSV
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start gap-3 bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
-                onClick={() => handleExport('excel')}
-                disabled={isExporting || !reportData?.txCount}
-              >
-                <HiOutlineDocumentArrowDown className="w-5 h-5 text-blue-400" />
-                Export for Excel
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Export to CSV
               </Button>
             </div>
-          </Card>
+          </div>
         </div>
 
-        <div className="lg:col-span-2">
-          <Card className="glass-panel p-6 border-white/10 min-h-[500px]">
-            <div className="flex items-center gap-3 mb-8 pb-6 border-b border-white/10">
-              <div className="p-3 bg-primary-500/20 text-primary-400 rounded-xl">
-                <HiOutlineChartPie className="w-6 h-6" />
+        {/* Preview Panel */}
+        <div className="md:col-span-2 space-y-6">
+          <div className="bg-card border border-border rounded-lg p-6 shadow-sm min-h-[400px]">
+            <h2 className="font-semibold text-lg mb-6">Report Preview</h2>
+            
+            {isLoading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="h-24 bg-surface rounded-lg"></div>
+                <div className="h-64 bg-surface rounded-lg"></div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-white">Report Preview</h2>
-                {reportData && (
-                  <p className="text-white/50 text-sm">
-                    {formatDate(reportData.startDate)} - {formatDate(reportData.endDate)}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {!reportData || reportData.txCount === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-center">
-                <p className="text-white/50 text-lg">No data available for this period</p>
-                <p className="text-white/30 text-sm mt-2">Try selecting a different date range</p>
+            ) : filteredTransactions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mb-4">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-medium text-lg">No data found</h3>
+                <p className="text-muted-foreground">Try adjusting your date range.</p>
               </div>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-6">
+                {/* Summary Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                    <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Total Income</p>
-                    <p className="text-xl font-semibold text-emerald-400">{formatCurrency(reportData.income, currency)}</p>
+                  <div className="bg-surface-sunken p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Income</p>
+                    <p className="font-semibold text-positive">{formatCurrency(totalIncome, defaultCurrency)}</p>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                    <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Total Expenses</p>
-                    <p className="text-xl font-semibold text-rose-400">{formatCurrency(reportData.expenses, currency)}</p>
+                  <div className="bg-surface-sunken p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Total Expense</p>
+                    <p className="font-semibold text-negative">{formatCurrency(totalExpense, defaultCurrency)}</p>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                    <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Net Savings</p>
-                    <p className="text-xl font-semibold text-white">{formatCurrency(reportData.net, currency)}</p>
+                  <div className="bg-surface-sunken p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Net Flow</p>
+                    <p className="font-semibold">{formatCurrency(totalIncome - totalExpense, defaultCurrency)}</p>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                    <p className="text-white/50 text-xs uppercase tracking-wider mb-1">Transactions</p>
-                    <p className="text-xl font-semibold text-white">{reportData.txCount}</p>
+                  <div className="bg-surface-sunken p-4 rounded-lg">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Records</p>
+                    <p className="font-semibold">{filteredTransactions.length}</p>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wider mb-4">Top Spending Categories</h3>
-                  <div className="space-y-3">
-                    {reportData.topCategories.length > 0 ? (
-                      reportData.topCategories.map((cat, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
-                          <span className="text-white text-sm">{cat.name}</span>
-                          <span className="text-white font-medium">{formatCurrency(cat.amount, currency)}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-white/40 text-sm italic">No expenses recorded</p>
-                    )}
-                  </div>
+                {/* Table Preview */}
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-muted-foreground uppercase bg-surface-sunken">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold">Date</th>
+                        <th className="px-4 py-3 font-semibold">Type</th>
+                        <th className="px-4 py-3 font-semibold">Category</th>
+                        <th className="px-4 py-3 font-semibold text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border bg-card">
+                      {filteredTransactions.slice(0, 5).map(t => (
+                        <tr key={t.id}>
+                          <td className="px-4 py-3">{format(new Date(t.date), 'MMM d, yyyy')}</td>
+                          <td className="px-4 py-3 capitalize">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-positive/10 text-positive' : 'bg-negative/10 text-negative'}`}>
+                              {t.type}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">{t.categoryId}</td>
+                          <td className={`px-4 py-3 text-right font-medium ${t.type === 'income' ? 'text-positive' : ''}`}>
+                            {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amountMinorUnits, t.currency)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {filteredTransactions.length > 5 && (
+                    <div className="bg-surface-sunken p-3 text-center text-xs text-muted-foreground border-t border-border">
+                      Showing 5 of {filteredTransactions.length} records. Download report to see all.
+                    </div>
+                  )}
                 </div>
               </div>
             )}
-          </Card>
+          </div>
         </div>
       </div>
     </div>

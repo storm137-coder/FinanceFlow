@@ -71,11 +71,11 @@ export default function BillsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 border-l-4 border-l-warning/50">
           <p className="text-caption text-muted-foreground mb-1">Total Due</p>
-          <p className="text-h3 font-display text-warning">{formatCurrency(stats.totalDue, user?.currency)}</p>
+          <p className="text-h3 font-display text-warning truncate">{formatCurrency(stats.totalDue, user?.currency)}</p>
         </Card>
         <Card className="p-4 border-l-4 border-l-positive/50">
           <p className="text-caption text-muted-foreground mb-1">Paid This Month</p>
-          <p className="text-h3 font-display text-positive">{formatCurrency(stats.totalPaid, user?.currency)}</p>
+          <p className="text-h3 font-display text-positive truncate">{formatCurrency(stats.totalPaid, user?.currency)}</p>
         </Card>
         <Card className="p-4 border-l-4 border-l-primary/50">
           <p className="text-caption text-muted-foreground mb-1">Upcoming (7 days)</p>

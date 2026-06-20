@@ -105,22 +105,14 @@ export default function InvestmentsPage() {
         <>
           {/* Portfolio Overview Widget */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-              <p className="text-sm text-muted-foreground mb-2">
-                Total Invested
-              </p>
-              <p className="text-3xl font-display font-semibold">
-                {formatCurrency(totalInvested, defaultCurrency)}
-              </p>
+            <div className="bg-card border border-border rounded-lg p-6 shadow-sm min-w-0">
+              <p className="text-sm text-muted-foreground mb-2">Total Invested</p>
+              <p className="text-3xl font-display font-semibold truncate">{formatCurrency(totalInvested, defaultCurrency)}</p>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-              <p className="text-sm text-muted-foreground mb-2">
-                Current Value
-              </p>
-              <p className="text-3xl font-display font-semibold">
-                {formatCurrency(totalCurrentValue, defaultCurrency)}
-              </p>
+            <div className="bg-card border border-border rounded-lg p-6 shadow-sm min-w-0">
+              <p className="text-sm text-muted-foreground mb-2">Current Value</p>
+              <p className="text-3xl font-display font-semibold truncate">{formatCurrency(totalCurrentValue, defaultCurrency)}</p>
             </div>
 
             <div

@@ -149,7 +149,7 @@ export default function GoalsPage() {
                   <div className="flex justify-between items-end">
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Saved</p>
-                      <p className="font-display font-bold text-2xl">
+                      <p className="font-display font-bold text-2xl truncate">
                         {formatCurrency(goal.currentMinorUnits, defaultCurrency)}
                       </p>
                     </div>

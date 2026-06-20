@@ -42,7 +42,7 @@ export function AccountList() {
           </div>
           
           <div className="flex-1 min-w-0 flex items-end justify-between">
-            <div>
+            <div className="min-w-0 pr-4">
               <p className="text-sm text-muted-foreground mb-1">Balance</p>
               <p className="text-2xl font-bold font-mono tracking-tight truncate">
                 {formatCurrency(account.balanceMinorUnits, account.currency)}

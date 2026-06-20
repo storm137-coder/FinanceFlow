@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BILL_CATEGORIES } from '@/lib/constants';
 import { useBills, useUpdateBill, useDeleteBill } from '@/hooks/useBills';
 import { toast } from 'sonner';
-
+import { toMinorUnits, fromMinorUnits } from '@/lib/currency';
+import { useAuth } from '@/contexts/AuthContext';
 interface BillFormProps {
   initialData?: any;
   onSuccess?: () => void;
@@ -19,6 +20,8 @@ interface BillFormProps {
 }
 
 export function BillForm({ initialData, onSuccess, onCancel }: BillFormProps) {
+  const { user } = useAuth();
+  const defaultCurrency = user?.currency || 'USD';
   const { addBill } = useBills();
   const { mutateAsync: updateBill } = useUpdateBill();
   const { mutateAsync: deleteBill } = useDeleteBill();
@@ -28,7 +31,7 @@ export function BillForm({ initialData, onSuccess, onCancel }: BillFormProps) {
     resolver: zodResolver(billSchema),
     defaultValues: initialData ? {
       name: initialData.name,
-      amount: initialData.amount,
+      amount: fromMinorUnits(initialData.amount, defaultCurrency),
       dueDate: initialData.dueDate,
       recurring: initialData.recurring,
       recurringType: initialData.recurringType || 'monthly',
@@ -56,7 +59,7 @@ export function BillForm({ initialData, onSuccess, onCancel }: BillFormProps) {
     try {
       const payload = {
         name: data.name,
-        amount: data.amount,
+        amount: toMinorUnits(data.amount, defaultCurrency),
         category: data.category,
         dueDate: data.dueDate,
         status: data.status,

@@ -32,7 +32,7 @@ export function SummaryCards() {
           <Landmark className="h-4 w-4 text-muted-foreground" />
         </div>
         <div className="flex items-baseline gap-2">
-          <p className="text-3xl font-display font-bold">
+          <p className="text-3xl font-display font-bold truncate">
             {formatCurrency(totalBalanceMinorUnits, displayCurrency)}
           </p>
         </div>
@@ -45,7 +45,7 @@ export function SummaryCards() {
           <ArrowUpRight className="h-4 w-4 text-positive" />
         </div>
         <div className="flex items-baseline gap-2">
-          <p className="text-3xl font-display font-bold">
+          <p className="text-3xl font-display font-bold truncate">
             {formatCurrency(monthlyIncomeMinorUnits, displayCurrency)}
           </p>
         </div>
@@ -58,7 +58,7 @@ export function SummaryCards() {
           <ArrowDownRight className="h-4 w-4 text-negative" />
         </div>
         <div className="flex items-baseline gap-2">
-          <p className="text-3xl font-display font-bold">
+          <p className="text-3xl font-display font-bold truncate">
             {formatCurrency(monthlyExpenseMinorUnits, displayCurrency)}
           </p>
         </div>

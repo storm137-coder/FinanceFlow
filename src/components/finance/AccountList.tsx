@@ -35,9 +35,9 @@ export function AccountList() {
             </span>
           </div>
           
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-sm text-muted-foreground mb-1">Balance</p>
-            <p className="text-2xl font-bold font-mono tracking-tight">
+            <p className="text-2xl font-bold font-mono tracking-tight truncate">
               {formatCurrency(account.balanceMinorUnits, account.currency)}
             </p>
           </div>

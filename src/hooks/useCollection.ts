@@ -15,7 +15,8 @@ import {
   updateDoc,
   deleteDoc,
   serverTimestamp,
-  WhereFilterOp
+  WhereFilterOp,
+  onSnapshot
 } from 'firebase/firestore';
 
 interface UseCollectionOptions {
@@ -69,23 +70,41 @@ export function useCollection<T extends { id: string }>(
         q = query(q, limit(parsedOptions.limitCount));
       }
 
-      const querySnapshot = await getDocs(q);
-      const items: T[] = [];
-      querySnapshot.forEach((doc) => {
-        items.push({ id: doc.id, ...doc.data() } as T);
-      });
-      setData(items);
-      setError(null);
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          const items: T[] = [];
+          querySnapshot.forEach((doc) => {
+            items.push({ id: doc.id, ...doc.data() } as T);
+          });
+          setData(items);
+          setError(null);
+          setLoading(false);
+        },
+        (err: any) => {
+          console.error('Error fetching collection:', err);
+          setError(err.message);
+          setLoading(false);
+        }
+      );
+
+      return () => unsubscribe();
     } catch (err: any) {
-      console.error('Error fetching collection:', err);
+      console.error('Error setting up collection listener:', err);
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   }, [collectionName, optionsString, user]);
 
   useEffect(() => {
-    fetchData();
+    const unsubscribePromise = fetchData();
+    return () => {
+      if (unsubscribePromise && typeof unsubscribePromise.then === 'function') {
+        unsubscribePromise.then(unsub => {
+          if (typeof unsub === 'function') unsub();
+        });
+      }
+    };
   }, [fetchData]);
 
   const add = async (item: Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'uid'>) => {
@@ -100,7 +119,6 @@ export function useCollection<T extends { id: string }>(
     };
     
     await setDoc(newDocRef, dataToSave);
-    await fetchData(); // Refresh data
     return newDocRef.id;
   };
 
@@ -112,14 +130,12 @@ export function useCollection<T extends { id: string }>(
       ...updates,
       updatedAt: serverTimestamp(),
     });
-    await fetchData();
   };
 
   const remove = async (id: string) => {
     if (!user) throw new Error('Not authenticated');
     
     await deleteDoc(doc(db, 'users', user.uid, collectionName, id));
-    await fetchData();
   };
 
   return { data, loading, error, add, update, remove, refresh: fetchData };

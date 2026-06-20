@@ -47,7 +47,7 @@ export function useCollection<T extends { id: string }>(
 
     setLoading(true);
     try {
-      let q = query(collection(db, collectionName), where('uid', '==', user.uid));
+      let q = query(collection(db, 'users', user.uid, collectionName), where('uid', '==', user.uid));
       
       const parsedOptions = optionsString ? JSON.parse(optionsString) as UseCollectionOptions : undefined;
 
@@ -91,7 +91,7 @@ export function useCollection<T extends { id: string }>(
   const add = async (item: Omit<T, 'id' | 'createdAt' | 'updatedAt' | 'uid'>) => {
     if (!user) throw new Error('Not authenticated');
     
-    const newDocRef = doc(collection(db, collectionName));
+    const newDocRef = doc(collection(db, 'users', user.uid, collectionName));
     const dataToSave = {
       ...item,
       uid: user.uid,
@@ -107,7 +107,7 @@ export function useCollection<T extends { id: string }>(
   const update = async (id: string, updates: Partial<T>) => {
     if (!user) throw new Error('Not authenticated');
     
-    const docRef = doc(db, collectionName, id);
+    const docRef = doc(db, 'users', user.uid, collectionName, id);
     await updateDoc(docRef, {
       ...updates,
       updatedAt: serverTimestamp(),
@@ -118,7 +118,7 @@ export function useCollection<T extends { id: string }>(
   const remove = async (id: string) => {
     if (!user) throw new Error('Not authenticated');
     
-    await deleteDoc(doc(db, collectionName, id));
+    await deleteDoc(doc(db, 'users', user.uid, collectionName, id));
     await fetchData();
   };
 

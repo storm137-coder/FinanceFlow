@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Transaction } from '@/types';
 
 export const CATEGORIES = [
-  'Housing', 'Food', 'Transportation', 'Utilities', 'Entertainment', 'Shopping', 'Healthcare', 'Savings', 'Other'
+  'Housing', 'Food', 'Transportation', 'Utilities', 'Entertainment', 'Shopping', 'Healthcare', 'Savings', 'Salary', 'Other'
 ];
 
 interface TransactionFormProps {
@@ -162,22 +162,18 @@ export function TransactionForm({ onSuccess, initialData }: TransactionFormProps
 
       <div className="space-y-2">
         <Label htmlFor="categoryId">Category</Label>
-        <Controller
-          control={control}
-          name="categoryId"
-          render={({ field }) => (
-            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
-              <SelectTrigger id="categoryId">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+        <Input 
+          id="categoryId" 
+          list="categories" 
+          placeholder="Select or type a category" 
+          {...register('categoryId')} 
+          disabled={isLoading} 
         />
+        <datalist id="categories">
+          {CATEGORIES.map(cat => (
+            <option key={cat} value={cat} />
+          ))}
+        </datalist>
         {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
       </div>
 

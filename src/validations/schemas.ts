@@ -20,13 +20,13 @@ export const accountSchema = z.object({
   name: z.string().min(1, 'Account name is required').max(100),
   type: z.enum(['checking', 'savings', 'credit', 'cash']),
   currency: z.string().min(3, 'Currency code is required'),
-  initialBalance: z.coerce.number({ message: 'Initial balance is required' }),
+  initialBalance: z.coerce.number({ message: 'Initial balance is required' }).max(100000000000, 'Balance cannot exceed 100 billion'),
 });
 
 export const transactionSchema = z.object({
   accountId: z.string().min(1, 'Account is required'),
   type: z.enum(['income', 'expense', 'transfer']),
-  amount: z.coerce.number({ message: 'Amount is required' }).positive('Amount must be positive'),
+  amount: z.coerce.number({ message: 'Amount is required' }).positive('Amount must be positive').max(100000000000, 'Amount cannot exceed 100 billion'),
   categoryId: z.string().min(1, 'Category is required'),
   merchant: z.string().optional(),
   date: z.string().min(1, 'Date is required'),
@@ -37,8 +37,8 @@ export const transactionSchema = z.object({
 export const goalSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   description: z.string().optional(),
-  targetAmount: z.coerce.number({ message: 'Target amount is required' }).positive(),
-  currentAmount: z.coerce.number().min(0).default(0),
+  targetAmount: z.coerce.number({ message: 'Target amount is required' }).positive().max(100000000000, 'Amount cannot exceed 100 billion'),
+  currentAmount: z.coerce.number().min(0).max(100000000000, 'Amount cannot exceed 100 billion').default(0),
   category: z.string().min(1, 'Category is required'),
   priority: z.enum(['low', 'medium', 'high']),
   deadline: z.string().min(1, 'Deadline is required'),
@@ -48,15 +48,15 @@ export const goalSchema = z.object({
 
 export const budgetSchema = z.object({
   category: z.string().min(1, 'Category is required'),
-  amount: z.coerce.number({ message: 'Budget amount is required' }).positive(),
-  spent: z.coerce.number().min(0).default(0),
+  amount: z.coerce.number({ message: 'Budget amount is required' }).positive().max(100000000000, 'Amount cannot exceed 100 billion'),
+  spent: z.coerce.number().min(0).max(100000000000).default(0),
   month: z.coerce.number().min(0).max(11),
   year: z.coerce.number().min(2020).max(2100),
 });
 
 export const billSchema = z.object({
   name: z.string().min(1, 'Bill name is required').max(100),
-  amount: z.coerce.number({ message: 'Amount is required' }).positive(),
+  amount: z.coerce.number({ message: 'Amount is required' }).positive().max(100000000000, 'Amount cannot exceed 100 billion'),
   category: z.string().min(1, 'Category is required'),
   dueDate: z.string().min(1, 'Due date is required'),
   status: z.enum(['pending', 'paid', 'overdue']).default('pending'),
@@ -69,8 +69,8 @@ export const billSchema = z.object({
 export const investmentSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100),
   type: z.enum(['stocks', 'bonds', 'mutual_funds', 'etf', 'crypto', 'real_estate', 'gold', 'other']),
-  investedAmount: z.coerce.number({ message: 'Invested amount is required' }).positive(),
-  currentValue: z.coerce.number({ message: 'Current value is required' }).min(0),
+  investedAmount: z.coerce.number({ message: 'Invested amount is required' }).positive().max(100000000000, 'Amount cannot exceed 100 billion'),
+  currentValue: z.coerce.number({ message: 'Current value is required' }).min(0).max(100000000000, 'Amount cannot exceed 100 billion'),
   purchaseDate: z.string().min(1, 'Purchase date is required'),
   broker: z.string().optional(),
   notes: z.string().optional(),
@@ -78,8 +78,8 @@ export const investmentSchema = z.object({
 
 export const loanSchema = z.object({
   name: z.string().min(1, 'Loan name is required').max(100),
-  borrowedAmount: z.coerce.number({ message: 'Borrowed amount is required' }).positive(),
-  remainingAmount: z.coerce.number({ message: 'Remaining amount is required' }).min(0),
+  borrowedAmount: z.coerce.number({ message: 'Borrowed amount is required' }).positive().max(100000000000, 'Amount cannot exceed 100 billion'),
+  remainingAmount: z.coerce.number({ message: 'Remaining amount is required' }).min(0).max(100000000000, 'Amount cannot exceed 100 billion'),
   interestRate: z.coerce.number({ message: 'Interest rate is required' }).min(0).max(100),
   durationYears: z.coerce.number().min(0).default(0),
   durationMonths: z.coerce.number().min(0).max(11).default(0),
@@ -97,7 +97,7 @@ export const loanSchema = z.object({
 
 export const wishlistSchema = z.object({
   name: z.string().min(1, 'Item name is required').max(100),
-  price: z.coerce.number({ message: 'Price is required' }).positive(),
+  price: z.coerce.number({ message: 'Price is required' }).positive().max(100000000000, 'Amount cannot exceed 100 billion'),
   priority: z.enum(['low', 'medium', 'high']),
   status: z.enum(['planned', 'saving', 'purchased', 'cancelled']).default('planned'),
   imageUrl: z.string().optional(),

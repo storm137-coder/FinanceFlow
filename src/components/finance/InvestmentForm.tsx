@@ -15,7 +15,7 @@ import { toMinorUnits, fromMinorUnits } from '@/lib/currency';
 
 interface InvestmentFormProps {
   onSuccess?: () => void;
-  initialData?: Investment;
+  initialData?: any;
   defaultCurrency?: string;
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { billSchema } from '@/validations/schemas';
@@ -9,19 +9,33 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BILL_CATEGORIES } from '@/lib/constants';
-import { Bill } from '@/types';
+import { useBills, useUpdateBill, useDeleteBill } from '@/hooks/useBills';
+import { toast } from 'sonner';
 
 interface BillFormProps {
-  initialData?: Bill;
-  onSubmit: (data: any) => Promise<void>;
-  onCancel: () => void;
-  loading?: boolean;
+  initialData?: any;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
-export function BillForm({ initialData, onSubmit, onCancel, loading }: BillFormProps) {
+export function BillForm({ initialData, onSuccess, onCancel }: BillFormProps) {
+  const { addBill } = useBills();
+  const { mutateAsync: updateBill } = useUpdateBill();
+  const { mutateAsync: deleteBill } = useDeleteBill();
+  const [isLoading, setIsLoading] = useState(false);
+
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     resolver: zodResolver(billSchema),
-    defaultValues: initialData || {
+    defaultValues: initialData ? {
+      name: initialData.name,
+      amount: initialData.amount,
+      dueDate: initialData.dueDate,
+      recurring: initialData.recurring,
+      recurringType: initialData.recurringType || 'monthly',
+      status: initialData.status,
+      autopay: initialData.autopay,
+      category: initialData.category,
+    } : {
       name: '',
       amount: 0,
       dueDate: new Date().toISOString().split('T')[0],
@@ -36,6 +50,51 @@ export function BillForm({ initialData, onSubmit, onCancel, loading }: BillFormP
   const category = watch('category');
   const recurring = watch('recurring');
   const status = watch('status');
+
+  const onSubmit = async (data: any) => {
+    setIsLoading(true);
+    try {
+      const payload = {
+        name: data.name,
+        amount: data.amount,
+        category: data.category,
+        dueDate: data.dueDate,
+        status: data.status,
+        recurring: data.recurring,
+        recurringType: data.recurring ? data.recurringType : null,
+        autopay: data.autopay,
+      };
+
+      if (initialData) {
+        await updateBill({ id: initialData.id, ...payload });
+        toast.success('Bill updated successfully!');
+      } else {
+        await addBill(payload);
+        toast.success('Bill added successfully!');
+      }
+      onSuccess?.();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save bill.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!initialData) return;
+    if (!confirm('Are you sure you want to delete this bill?')) return;
+    
+    setIsLoading(true);
+    try {
+      await deleteBill(initialData.id);
+      toast.success('Bill deleted successfully!');
+      onSuccess?.();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete bill.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -117,9 +176,20 @@ export function BillForm({ initialData, onSubmit, onCancel, loading }: BillFormP
         </div>
       )}
 
-      <div className="flex justify-end gap-3 pt-4">
-        <Button variant="ghost" type="button" onClick={onCancel} disabled={loading}>Cancel</Button>
-        <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Bill'}</Button>
+      <div className="flex gap-4 pt-4">
+        {onCancel && (
+          <Button variant="ghost" type="button" onClick={onCancel} disabled={isLoading}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" className="flex-1" disabled={isLoading}>
+          {isLoading ? 'Saving...' : initialData ? 'Update Bill' : 'Save Bill'}
+        </Button>
+        {initialData && (
+          <Button type="button" variant="destructive" onClick={handleDelete} disabled={isLoading}>
+            Delete
+          </Button>
+        )}
       </div>
     </form>
   );

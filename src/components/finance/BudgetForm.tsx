@@ -4,23 +4,26 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { budgetSchema, BudgetFormData } from '@/validations/schemas';
-import { useAddBudget } from '@/hooks/useBudgets';
+import { useAddBudget, useUpdateBudget, useDeleteBudget } from '@/hooks/useBudgets';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toMinorUnits } from '@/lib/currency';
+import { toMinorUnits, fromMinorUnits } from '@/lib/currency';
 import { useAccounts } from '@/hooks/useAccounts';
 import { toast } from 'sonner';
 import { CATEGORIES } from '@/components/finance/TransactionForm';
 
 interface BudgetFormProps {
   onSuccess?: () => void;
+  initialData?: any;
 }
 
-export function BudgetForm({ onSuccess }: BudgetFormProps) {
+export function BudgetForm({ onSuccess, initialData }: BudgetFormProps) {
   const { data: accounts } = useAccounts();
-  const addBudgetMutation = useAddBudget();
+  const { mutateAsync: addBudgetMutation } = useAddBudget();
+  const { mutateAsync: updateBudgetMutation } = useUpdateBudget();
+  const { mutateAsync: deleteBudgetMutation } = useDeleteBudget();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const defaultCurrency = accounts && accounts.length > 0 ? accounts[0].currency : 'USD';
@@ -33,7 +36,13 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
     reset
   } = useForm({
     resolver: zodResolver(budgetSchema),
-    defaultValues: {
+    defaultValues: initialData ? {
+      category: initialData.category,
+      amount: fromMinorUnits(initialData.amountMinorUnits, defaultCurrency),
+      month: initialData.month,
+      year: initialData.year,
+      spent: fromMinorUnits(initialData.spentMinorUnits || 0, defaultCurrency),
+    } : {
       month: new Date().getMonth(),
       year: new Date().getFullYear(),
       spent: 0,
@@ -43,17 +52,40 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
   const onSubmit = async (data: BudgetFormData) => {
     setIsSubmitting(true);
     try {
-      await addBudgetMutation.mutateAsync({
+      const payload = {
         category: data.category,
         month: data.month,
         year: data.year,
         amountMinorUnits: toMinorUnits(data.amount, defaultCurrency),
-      });
-      toast.success('Budget created successfully');
+      };
+
+      if (initialData) {
+        await updateBudgetMutation({ id: initialData.id, ...payload });
+        toast.success('Budget updated successfully');
+      } else {
+        await addBudgetMutation(payload);
+        toast.success('Budget created successfully');
+      }
       reset();
       onSuccess?.();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create budget');
+      toast.error(error.message || (initialData ? 'Failed to update budget' : 'Failed to create budget'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!initialData) return;
+    if (!confirm('Are you sure you want to delete this budget?')) return;
+    
+    setIsSubmitting(true);
+    try {
+      await deleteBudgetMutation(initialData.id);
+      toast.success('Budget deleted successfully!');
+      onSuccess?.();
+    } catch (error: any) {
+      toast.error('Failed to delete budget.');
     } finally {
       setIsSubmitting(false);
     }
@@ -63,7 +95,7 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <Select onValueChange={(val) => setValue('category', val)}>
+        <Select onValueChange={(val) => setValue('category', val)} defaultValue={initialData?.category}>
           <SelectTrigger>
             <SelectValue placeholder="Select a category" />
           </SelectTrigger>
@@ -99,9 +131,16 @@ export function BudgetForm({ onSuccess }: BudgetFormProps) {
         </div>
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving...' : 'Create Budget'}
-      </Button>
+      <div className="flex gap-4 pt-4">
+        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : initialData ? 'Update Budget' : 'Create Budget'}
+        </Button>
+        {initialData && (
+          <Button type="button" variant="destructive" onClick={handleDelete} disabled={isSubmitting}>
+            Delete
+          </Button>
+        )}
+      </div>
     </form>
   );
 }

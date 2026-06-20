@@ -6,7 +6,7 @@ import { GoalForm } from '@/components/finance/GoalForm';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { formatCurrency, toMinorUnits } from '@/lib/currency';
-import { PlusCircle, Target, ArrowUpRight, DollarSign } from 'lucide-react';
+import { PlusCircle, Target, ArrowUpRight, DollarSign, Edit2 } from 'lucide-react';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ export default function GoalsPage() {
   const { data: goals, isLoading } = useGoals();
   const { data: accounts } = useAccounts();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<any>(null);
   const [selectedGoalForUpdate, setSelectedGoalForUpdate] = useState<any>(null);
   const [updateAmount, setUpdateAmount] = useState<string>('');
   const [updateAction, setUpdateAction] = useState<'add' | 'remove'>('add');
@@ -64,18 +65,31 @@ export default function GoalsPage() {
           <h1 className="text-h1 font-display">Savings Goals</h1>
           <p className="text-muted-foreground mt-1">Track your progress towards big purchases.</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen || !!editingGoal} onOpenChange={(open) => {
+          if (!open) {
+            setIsDialogOpen(false);
+            setEditingGoal(null);
+          } else {
+            setIsDialogOpen(true);
+          }
+        }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setEditingGoal(null)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               New Goal
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create Goal</DialogTitle>
+              <DialogTitle>{editingGoal ? 'Edit Goal' : 'Create Goal'}</DialogTitle>
             </DialogHeader>
-            <GoalForm onSuccess={() => setIsDialogOpen(false)} />
+            <GoalForm 
+              initialData={editingGoal}
+              onSuccess={() => {
+                setIsDialogOpen(false);
+                setEditingGoal(null);
+              }} 
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -112,12 +126,22 @@ export default function GoalsPage() {
                       Target Date: {format(new Date(goal.deadline), 'MMM d, yyyy')}
                     </p>
                   </div>
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${
-                    goal.priority === 'high' ? 'bg-negative/10 text-negative' :
-                    goal.priority === 'medium' ? 'bg-accent/10 text-accent' :
-                    'bg-secondary text-muted-foreground'
-                  }`}>
-                    {goal.priority.toUpperCase()}
+                  <div className="flex items-center gap-2">
+                    <div className={`px-2 py-1 rounded text-xs font-medium ${
+                      goal.priority === 'high' ? 'bg-negative/10 text-negative' :
+                      goal.priority === 'medium' ? 'bg-accent/10 text-accent' :
+                      'bg-secondary text-muted-foreground'
+                    }`}>
+                      {goal.priority.toUpperCase()}
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+                      onClick={() => setEditingGoal(goal)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
 

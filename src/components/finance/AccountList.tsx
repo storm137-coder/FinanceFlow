@@ -2,8 +2,12 @@
 
 import { useAccounts } from '@/hooks/useAccounts';
 import { formatCurrency } from '@/lib/currency';
-import { CreditCard, Wallet, PiggyBank, Landmark } from 'lucide-react';
+import { CreditCard, Wallet, PiggyBank, Landmark, Edit2 } from 'lucide-react';
 import { Account } from '@/types';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AccountForm } from '@/components/finance/AccountForm';
 
 function AccountIcon({ type }: { type: Account['type'] }) {
   switch (type) {
@@ -16,13 +20,15 @@ function AccountIcon({ type }: { type: Account['type'] }) {
 
 export function AccountList() {
   const { data: accounts, isLoading, error } = useAccounts();
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null);
 
   if (isLoading) return <div className="p-4 text-center text-muted-foreground animate-pulse">Loading accounts...</div>;
   if (error) return <div className="p-4 text-center text-destructive">Failed to load accounts.</div>;
   if (!accounts || accounts.length === 0) return <div className="p-4 text-center text-muted-foreground bg-surface rounded-lg border border-border border-dashed">No accounts found. Add one to get started.</div>;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {accounts.map((account) => (
         <div key={account.id} className="p-6 rounded-lg border border-border bg-card text-card-foreground shadow-sm flex flex-col justify-between hover:border-ring transition-colors">
           <div className="flex justify-between items-start mb-4">
@@ -35,14 +41,39 @@ export function AccountList() {
             </span>
           </div>
           
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-muted-foreground mb-1">Balance</p>
-            <p className="text-2xl font-bold font-mono tracking-tight truncate">
-              {formatCurrency(account.balanceMinorUnits, account.currency)}
-            </p>
+          <div className="flex-1 min-w-0 flex items-end justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Balance</p>
+              <p className="text-2xl font-bold font-mono tracking-tight truncate">
+                {formatCurrency(account.balanceMinorUnits, account.currency)}
+              </p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+              onClick={() => setEditingAccount(account)}
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       ))}
-    </div>
+      </div>
+
+      <Dialog open={!!editingAccount} onOpenChange={(open) => !open && setEditingAccount(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Account</DialogTitle>
+          </DialogHeader>
+          {editingAccount && (
+            <AccountForm 
+              initialData={editingAccount} 
+              onSuccess={() => setEditingAccount(null)} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

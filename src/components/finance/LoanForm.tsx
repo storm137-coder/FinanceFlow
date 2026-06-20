@@ -14,7 +14,7 @@ import { toMinorUnits, fromMinorUnits } from '@/lib/currency';
 
 interface LoanFormProps {
   onSuccess?: () => void;
-  initialData?: Loan;
+  initialData?: any;
   defaultCurrency?: string;
 }
 

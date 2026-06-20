@@ -2,7 +2,11 @@
 
 import { useDashboard } from '@/hooks/useDashboard';
 import { formatCurrency } from '@/lib/currency';
-import { Landmark, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Landmark, ArrowUpRight, ArrowDownRight, Edit2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { ReconcileBalanceForm } from './ReconcileBalanceForm';
+import { useState } from 'react';
 
 export function SummaryCards() {
   const { 
@@ -10,8 +14,11 @@ export function SummaryCards() {
     displayCurrency, 
     monthlyIncomeMinorUnits, 
     monthlyExpenseMinorUnits, 
+    accounts,
     isLoading 
   } = useDashboard();
+
+  const [isReconcileModalOpen, setIsReconcileModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -31,10 +38,32 @@ export function SummaryCards() {
           <h3 className="font-medium text-sm text-muted-foreground">Total Balance</h3>
           <Landmark className="h-4 w-4 text-muted-foreground" />
         </div>
-        <div className="flex items-baseline gap-2">
-          <p className="text-3xl font-display font-bold truncate">
-            {formatCurrency(totalBalanceMinorUnits, displayCurrency)}
-          </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-baseline gap-2">
+            <p className="text-3xl font-display font-bold truncate">
+              {formatCurrency(totalBalanceMinorUnits, displayCurrency)}
+            </p>
+          </div>
+          
+          <Dialog open={isReconcileModalOpen} onOpenChange={setIsReconcileModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Reconcile Total Balance</DialogTitle>
+              </DialogHeader>
+              <ReconcileBalanceForm 
+                accounts={accounts}
+                currentTotalBalanceMinorUnits={totalBalanceMinorUnits}
+                displayCurrency={displayCurrency}
+                onSuccess={() => setIsReconcileModalOpen(false)}
+                onCancel={() => setIsReconcileModalOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 

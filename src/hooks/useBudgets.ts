@@ -80,3 +80,13 @@ export function useDeleteBudget() {
     },
   });
 }
+export function useUpdateBudget() {
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: any) => {
+      if (!user) throw new Error('Not logged in');
+      const ref = doc(db, 'users', user.uid, 'budgets', id);
+      await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+    }
+  });
+}

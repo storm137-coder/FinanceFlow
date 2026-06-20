@@ -100,3 +100,14 @@ export function useDeleteGoal() {
     },
   });
 }
+
+export function useUpdateGoal() {
+  const { user } = useAuth();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: any) => {
+      if (!user) throw new Error('Not logged in');
+      const ref = doc(db, 'users', user.uid, 'goals', id);
+      await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
+    }
+  });
+}

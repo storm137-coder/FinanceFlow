@@ -19,27 +19,6 @@ export default function BillsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
 
-  const handleAdd = async (data: any) => {
-    await addBill(data);
-    toast.success('Bill added successfully');
-    setIsAddModalOpen(false);
-  };
-
-  const handleUpdate = async (data: any) => {
-    if (editingBill) {
-      await updateBill(editingBill.id, data);
-      toast.success('Bill updated successfully');
-      setEditingBill(null);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this bill?')) {
-      await deleteBill(id);
-      toast.success('Bill deleted');
-    }
-  };
-
   const handleMarkPaid = async (bill: Bill) => {
     await updateBill(bill.id, { 
       status: 'paid'
@@ -84,7 +63,7 @@ export default function BillsPage() {
             <DialogHeader>
               <DialogTitle>Add New Bill</DialogTitle>
             </DialogHeader>
-            <BillForm onSubmit={handleAdd} onCancel={() => setIsAddModalOpen(false)} />
+            <BillForm onSuccess={() => setIsAddModalOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
@@ -150,9 +129,6 @@ export default function BillsPage() {
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground" onClick={() => setEditingBill(bill)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-danger hover:bg-danger/10" onClick={() => handleDelete(bill.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
                   </div>
                   {bill.status !== 'paid' && (
                     <Button size="sm" variant="outline" className="text-positive border-positive/30 hover:bg-positive/10" onClick={() => handleMarkPaid(bill)}>
@@ -174,8 +150,7 @@ export default function BillsPage() {
           {editingBill && (
             <BillForm 
               initialData={editingBill} 
-              onSubmit={handleUpdate} 
-              onCancel={() => setEditingBill(null)} 
+              onSuccess={() => setEditingBill(null)} 
             />
           )}
         </DialogContent>

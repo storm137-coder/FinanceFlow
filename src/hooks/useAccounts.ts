@@ -76,7 +76,7 @@ export function useUpdateAccount() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Omit<Account, 'id' | 'createdAt' | 'updatedAt' | 'balanceMinorUnits'>> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Omit<Account, 'id' | 'createdAt' | 'updatedAt'>> }) => {
       if (!user) throw new Error('Must be logged in to update an account');
 
       const accountRef = doc(db, 'users', user.uid, 'accounts', id);

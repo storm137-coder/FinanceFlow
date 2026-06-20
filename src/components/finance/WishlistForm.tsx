@@ -15,7 +15,7 @@ import { toMinorUnits, fromMinorUnits } from '@/lib/currency';
 
 interface WishlistFormProps {
   onSuccess?: () => void;
-  initialData?: WishlistItem;
+  initialData?: any;
   defaultCurrency?: string;
 }
 

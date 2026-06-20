@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { formatCurrency } from '@/lib/currency';
-import { PlusCircle, Target } from 'lucide-react';
+import { PlusCircle, Target, Edit2 } from 'lucide-react';
 import { useState } from 'react';
 
 export default function BudgetsPage() {
   const { data: budgets, isLoading } = useBudgets();
   const { spendByCategory, displayCurrency } = useDashboard();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<any>(null);
 
   return (
     <div className="space-y-6">
@@ -22,18 +23,31 @@ export default function BudgetsPage() {
           <h1 className="text-h1 font-display">Budgets</h1>
           <p className="text-muted-foreground mt-1">Manage your monthly spending limits.</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen || !!editingBudget} onOpenChange={(open) => {
+          if (!open) {
+            setIsDialogOpen(false);
+            setEditingBudget(null);
+          } else {
+            setIsDialogOpen(true);
+          }
+        }}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setEditingBudget(null)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               New Budget
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create Budget</DialogTitle>
+              <DialogTitle>{editingBudget ? 'Edit Budget' : 'Create Budget'}</DialogTitle>
             </DialogHeader>
-            <BudgetForm onSuccess={() => setIsDialogOpen(false)} />
+            <BudgetForm 
+              initialData={editingBudget}
+              onSuccess={() => {
+                setIsDialogOpen(false);
+                setEditingBudget(null);
+              }} 
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -74,10 +88,20 @@ export default function BudgetsPage() {
                     <h3 className="font-semibold text-lg">{budget.category}</h3>
                     <p className="text-sm text-muted-foreground">Monthly Limit</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-display font-bold">
-                      {formatCurrency(budget.amountMinorUnits, displayCurrency)}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-display font-bold">
+                        {formatCurrency(budget.amountMinorUnits, displayCurrency)}
+                      </p>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+                      onClick={() => setEditingBudget(budget)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
 

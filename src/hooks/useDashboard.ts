@@ -65,6 +65,7 @@ export function useDashboard() {
 
   return {
     ...stats,
+    accounts: accounts || [],
     isLoading: accountsLoading || transactionsLoading,
   };
 }

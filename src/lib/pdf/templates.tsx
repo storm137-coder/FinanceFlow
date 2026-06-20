@@ -230,3 +230,4 @@ export const ReportDocument = ({ title, subtitle, summary, transactions }: Repor
     </Document>
   );
 };
+

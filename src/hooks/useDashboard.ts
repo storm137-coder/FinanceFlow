@@ -31,16 +31,20 @@ export function useDashboard() {
     transactions.forEach((tx: Transaction) => {
       const txDate = new Date(tx.date);
       if (isAfter(txDate, monthStart)) {
+        const amount = tx.amountMinorUnits !== undefined 
+          ? tx.amountMinorUnits 
+          : Math.round(((tx as any).amount || 0) * 100);
+          
         if (tx.type === 'income') {
-          monthlyIncomeMinorUnits += tx.amountMinorUnits;
+          monthlyIncomeMinorUnits += amount;
         } else if (tx.type === 'expense') {
-          monthlyExpenseMinorUnits += tx.amountMinorUnits;
+          monthlyExpenseMinorUnits += amount;
           
           // Aggregate for pie chart
           if (!categorySpend[tx.categoryId]) {
             categorySpend[tx.categoryId] = 0;
           }
-          categorySpend[tx.categoryId] += tx.amountMinorUnits;
+          categorySpend[tx.categoryId] += amount;
         }
       }
     });

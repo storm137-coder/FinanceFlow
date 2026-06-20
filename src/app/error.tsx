@@ -22,7 +22,7 @@ export default function ErrorBoundary({
       </div>
       <div className="space-y-2">
         <h2 className="text-h2 font-display text-foreground">Something went wrong</h2>
-        <p className="text-body text-ink-muted max-w-md mx-auto">
+        <p className="text-body text-muted-foreground max-w-md mx-auto">
           We encountered an unexpected error while trying to load this page. 
           {error.message && <span className="block mt-2 text-sm bg-surface-sunken p-2 rounded text-ink">{error.message}</span>}
         </p>
@@ -33,3 +33,4 @@ export default function ErrorBoundary({
     </div>
   );
 }
+

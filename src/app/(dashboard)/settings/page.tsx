@@ -64,7 +64,7 @@ export default function SettingsPage() {
     <div className="max-w-4xl mx-auto space-y-8">
       <div>
         <h1 className="text-h2 font-display text-foreground">Settings</h1>
-        <p className="text-body text-ink-muted">Manage your profile and application preferences.</p>
+        <p className="text-body text-muted-foreground">Manage your profile and application preferences.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -75,11 +75,11 @@ export default function SettingsPage() {
               <User className="w-5 h-5" />
               Profile
             </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-ink-muted hover:bg-surface-sunken hover:text-foreground rounded-md font-medium text-left pointer-events-none opacity-50">
+            <button className="w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-surface-sunken hover:text-foreground rounded-md font-medium text-left pointer-events-none opacity-50">
               <Settings className="w-5 h-5" />
               Security (Coming Soon)
             </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-ink-muted hover:bg-surface-sunken hover:text-foreground rounded-md font-medium text-left pointer-events-none opacity-50">
+            <button className="w-full flex items-center gap-3 px-3 py-2 text-muted-foreground hover:bg-surface-sunken hover:text-foreground rounded-md font-medium text-left pointer-events-none opacity-50">
               <Globe className="w-5 h-5" />
               Integrations (Coming Soon)
             </button>
@@ -95,8 +95,8 @@ export default function SettingsPage() {
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div className="space-y-2">
                 <label className="text-body font-medium text-foreground">Email</label>
-                <Input type="email" value={user.email || ''} disabled className="bg-surface-sunken text-ink-muted" />
-                <p className="text-caption text-ink-muted">Your email address cannot be changed here.</p>
+                <Input type="email" value={user.email || ''} disabled className="bg-surface-sunken text-muted-foreground" />
+                <p className="text-caption text-muted-foreground">Your email address cannot be changed here.</p>
               </div>
               <div className="space-y-2">
                 <label className="text-body font-medium text-foreground">Display Name</label>
@@ -132,7 +132,7 @@ export default function SettingsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-caption text-ink-muted">This currency will be used across all your dashboard widgets and reports.</p>
+                <p className="text-caption text-muted-foreground">This currency will be used across all your dashboard widgets and reports.</p>
               </div>
 
               <div className="space-y-2">
@@ -161,7 +161,7 @@ export default function SettingsPage() {
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div>
                 <p className="font-medium text-foreground">Sign Out</p>
-                <p className="text-caption text-ink-muted">Sign out of your current session on this device.</p>
+                <p className="text-caption text-muted-foreground">Sign out of your current session on this device.</p>
               </div>
               <Button variant="outline" className="text-danger hover:bg-danger/10 border-danger/20" onClick={logout}>
                 Sign Out
@@ -174,3 +174,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

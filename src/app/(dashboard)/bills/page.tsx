@@ -73,7 +73,7 @@ export default function BillsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-h2 font-display text-foreground">Bills & Subscriptions</h1>
-          <p className="text-body text-ink-muted">Manage your recurring payments and due dates.</p>
+          <p className="text-body text-muted-foreground">Manage your recurring payments and due dates.</p>
         </div>
         
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
@@ -91,15 +91,15 @@ export default function BillsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4 border-l-4 border-l-warning/50">
-          <p className="text-caption text-ink-muted mb-1">Total Due</p>
+          <p className="text-caption text-muted-foreground mb-1">Total Due</p>
           <p className="text-h3 font-display text-warning">{formatCurrency(stats.totalDue, user?.currency)}</p>
         </Card>
         <Card className="p-4 border-l-4 border-l-positive/50">
-          <p className="text-caption text-ink-muted mb-1">Paid This Month</p>
+          <p className="text-caption text-muted-foreground mb-1">Paid This Month</p>
           <p className="text-h3 font-display text-positive">{formatCurrency(stats.totalPaid, user?.currency)}</p>
         </Card>
         <Card className="p-4 border-l-4 border-l-primary/50">
-          <p className="text-caption text-ink-muted mb-1">Upcoming (7 days)</p>
+          <p className="text-caption text-muted-foreground mb-1">Upcoming (7 days)</p>
           <p className="text-h3 font-display text-foreground">{stats.upcoming} bills</p>
         </Card>
       </div>
@@ -107,9 +107,9 @@ export default function BillsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {bills.length === 0 ? (
           <div className="col-span-full py-12 text-center bg-surface border border-border border-dashed rounded-xl">
-            <Calendar className="w-12 h-12 mx-auto text-ink-muted mb-4 opacity-50" />
+            <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-50" />
             <h3 className="text-h3 font-display text-foreground mb-2">No Bills Found</h3>
-            <p className="text-body text-ink-muted max-w-sm mx-auto">You haven't added any bills or subscriptions yet. Add one to start tracking your due dates.</p>
+            <p className="text-body text-muted-foreground max-w-sm mx-auto">You haven't added any bills or subscriptions yet. Add one to start tracking your due dates.</p>
           </div>
         ) : (
           bills.map(bill => {
@@ -123,7 +123,7 @@ export default function BillsPage() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h4 className="font-medium text-foreground text-lg">{bill.name}</h4>
-                      <p className="text-sm text-ink-muted">{bill.category}</p>
+                      <p className="text-sm text-muted-foreground">{bill.category}</p>
                     </div>
                     {bill.status === 'paid' ? (
                       <span className="bg-positive/10 text-positive text-xs px-2 py-1 rounded-full flex items-center gap-1 font-medium"><CheckCircle2 className="w-3 h-3"/> Paid</span>
@@ -136,10 +136,10 @@ export default function BillsPage() {
                   
                   <p className="text-2xl font-display text-foreground mb-4">
                     {formatCurrency(bill.amount, user?.currency)}
-                    {bill.recurring && <span className="text-sm font-normal text-ink-muted ml-1">/{bill.recurringType === 'monthly' ? 'mo' : bill.recurringType}</span>}
+                    {bill.recurring && <span className="text-sm font-normal text-muted-foreground ml-1">/{bill.recurringType === 'monthly' ? 'mo' : bill.recurringType}</span>}
                   </p>
                   
-                  <div className="flex items-center gap-2 text-sm text-ink-muted mb-6">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
                     <Calendar className="w-4 h-4" />
                     Due: {format(new Date(bill.dueDate), 'MMM dd, yyyy')}
                   </div>
@@ -147,7 +147,7 @@ export default function BillsPage() {
 
                 <div className="flex items-center justify-between pt-4 border-t border-border">
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-ink-muted hover:text-foreground" onClick={() => setEditingBill(bill)}>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground" onClick={() => setEditingBill(bill)}>
                       <Edit2 className="w-4 h-4" />
                     </Button>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-danger hover:bg-danger/10" onClick={() => handleDelete(bill.id)}>
@@ -183,3 +183,4 @@ export default function BillsPage() {
     </div>
   );
 }
+

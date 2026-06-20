@@ -52,7 +52,7 @@ function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className="p-2 rounded-full hover:bg-surface-sunken text-ink-muted transition-colors"
+      className="p-2 rounded-full hover:bg-surface-sunken text-muted-foreground transition-colors"
       aria-label="Toggle theme"
     >
       {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -90,7 +90,7 @@ export default function DashboardLayout({
             <span className="text-2xl">✉️</span>
           </div>
           <h2 className="text-h2 font-display text-foreground">Verify your email</h2>
-          <p className="text-body text-ink-muted">
+          <p className="text-body text-muted-foreground">
             We sent a verification email to <strong>{user.email}</strong>. Please verify your email to access the dashboard.
           </p>
           <div className="pt-4 space-y-3">
@@ -132,7 +132,7 @@ export default function DashboardLayout({
                 "flex items-center gap-3 rounded-md px-3 py-2 text-body transition-colors",
                 isActive 
                   ? "bg-primary/10 text-primary font-medium" 
-                  : "text-ink-muted hover:bg-surface-sunken hover:text-foreground"
+                  : "text-muted-foreground hover:bg-surface-sunken hover:text-foreground"
               )}
             >
               <item.icon className="h-5 w-5" />
@@ -163,7 +163,7 @@ export default function DashboardLayout({
           <div className="flex items-center gap-4">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <button className="lg:hidden p-2 -ml-2 text-ink-muted hover:text-foreground rounded-md">
+                <button className="lg:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground rounded-md">
                   <Menu className="w-6 h-6" />
                 </button>
               </SheetTrigger>
@@ -200,3 +200,4 @@ export default function DashboardLayout({
     </div>
   );
 }
+

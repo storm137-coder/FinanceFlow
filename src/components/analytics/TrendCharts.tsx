@@ -46,7 +46,10 @@ export function TrendCharts({ transactions, currency }: TrendChartsProps) {
     }
 
     sorted.forEach(t => {
-      const amount = t.amountMinorUnits / 100;
+      const amount = t.amountMinorUnits !== undefined 
+        ? t.amountMinorUnits / 100 
+        : ((t as any).amount || 0);
+        
       if (t.type === 'income') cumulativeSavings += amount;
       else cumulativeSavings -= amount;
 
@@ -75,7 +78,7 @@ export function TrendCharts({ transactions, currency }: TrendChartsProps) {
         <div className="bg-surface border border-border p-3 rounded-lg shadow-lg">
           <p className="font-medium text-foreground mb-1">{label}</p>
           <p className="text-sm text-accent">
-            Total Savings: {formatCurrency(payload[0].value, currency)}
+            Total Savings: {formatCurrency(Math.round(payload[0].value * 100), currency)}
           </p>
         </div>
       );

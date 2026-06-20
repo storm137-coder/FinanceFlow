@@ -11,7 +11,7 @@ export default function AuthLayout({
             FF
           </div>
           <h1 className="text-h2 font-display text-foreground">FinanceFlow</h1>
-          <p className="text-body text-muted mt-2 text-center">
+          <p className="text-body text-muted-foreground mt-2 text-center">
             Your personal wealth operating system.
           </p>
         </div>
@@ -20,3 +20,4 @@ export default function AuthLayout({
     </div>
   );
 }
+

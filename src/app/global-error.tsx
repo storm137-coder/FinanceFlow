@@ -21,7 +21,7 @@ export default function GlobalError({
         <div className="flex flex-col items-center justify-center min-h-screen p-6 text-center space-y-6 bg-background text-foreground">
           <div className="space-y-2">
             <h2 className="text-display font-display">Fatal Error</h2>
-            <p className="text-body text-ink-muted max-w-md mx-auto">
+            <p className="text-body text-muted-foreground max-w-md mx-auto">
               A critical error occurred that prevented the application from loading.
             </p>
           </div>
@@ -33,3 +33,4 @@ export default function GlobalError({
     </html>
   );
 }
+

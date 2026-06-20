@@ -89,7 +89,7 @@ export default function TransactionsPage() {
                     <div className="col-span-3 flex items-center justify-end gap-4">
                       <span className={`font-mono font-medium ${tx.type === 'income' ? 'text-positive' : 'text-foreground'}`}>
                         {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
-                        {formatCurrency(tx.amountMinorUnits, tx.currency)}
+                        {formatCurrency((tx.amountMinorUnits !== undefined ? tx.amountMinorUnits : ((tx as any).amount || 0) * 100), tx.currency)}
                       </span>
                       <Button 
                         variant="ghost" 
@@ -124,3 +124,4 @@ export default function TransactionsPage() {
     </div>
   );
 }
+

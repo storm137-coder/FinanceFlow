@@ -61,7 +61,7 @@ export default function ResetPasswordPage() {
         {isSent ? (
           <div className="text-center py-4 space-y-4">
             <div className="text-success font-medium">Check your email</div>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted-foreground">
               We have sent a password reset link to {form.getValues().email}.
             </p>
           </div>
@@ -90,7 +90,7 @@ export default function ResetPasswordPage() {
         )}
       </CardContent>
       <CardFooter>
-        <div className="text-sm text-center w-full text-muted">
+        <div className="text-sm text-center w-full text-muted-foreground">
           Remember your password?{' '}
           <Link href="/login" className="text-primary hover:underline font-medium">
             Sign in
@@ -100,3 +100,4 @@ export default function ResetPasswordPage() {
     </Card>
   );
 }
+

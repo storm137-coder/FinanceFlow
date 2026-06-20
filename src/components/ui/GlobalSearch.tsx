@@ -53,7 +53,7 @@ export function GlobalSearch() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <div className="relative w-full max-w-sm hidden md:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -64,7 +64,7 @@ export function GlobalSearch() {
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">
         {!hasResults ? (
-          <div className="p-4 text-center text-ink-muted text-sm">
+          <div className="p-4 text-center text-muted-foreground text-sm">
             No results found for "{query}"
           </div>
         ) : (
@@ -74,7 +74,7 @@ export function GlobalSearch() {
               
               return (
                 <div key={category} className="p-2">
-                  <h4 className="px-2 py-1 text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1">
+                  <h4 className="px-2 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                     {category}
                   </h4>
                   <div className="space-y-1">
@@ -96,7 +96,7 @@ export function GlobalSearch() {
                                 
                           if (displayAmount !== undefined) {
                             return (
-                              <span className="text-ink-muted shrink-0 text-xs font-mono">
+                              <span className="text-muted-foreground shrink-0 text-xs font-mono">
                                 {formatCurrency(displayAmount, user?.currency)}
                               </span>
                             );
@@ -115,3 +115,4 @@ export function GlobalSearch() {
     </Popover>
   );
 }
+

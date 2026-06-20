@@ -59,7 +59,7 @@ export function RecentTransactionsWidget() {
               </div>
               <div className={`font-mono text-sm font-medium ${tx.type === 'income' ? 'text-positive' : 'text-foreground'}`}>
                 {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
-                {formatCurrency(tx.amountMinorUnits, tx.currency)}
+                {formatCurrency((tx.amountMinorUnits !== undefined ? tx.amountMinorUnits : ((tx as any).amount || 0) * 100), tx.currency)}
               </div>
             </li>
           ))}
@@ -68,3 +68,4 @@ export function RecentTransactionsWidget() {
     </div>
   );
 }
+

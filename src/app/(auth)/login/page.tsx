@@ -96,7 +96,7 @@ export default function LoginPage() {
         </Form>
       </CardContent>
       <CardFooter>
-        <div className="text-sm text-center w-full text-muted">
+        <div className="text-sm text-center w-full text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Link href="/register" className="text-primary hover:underline font-medium">
             Sign up
@@ -106,3 +106,4 @@ export default function LoginPage() {
     </Card>
   );
 }
+

@@ -49,7 +49,9 @@ export default function AnalyticsPage() {
     let expense = 0;
     
     filteredTransactions.forEach(t => {
-      const amount = t.amountMinorUnits / 100;
+      const amount = t.amountMinorUnits !== undefined 
+        ? t.amountMinorUnits / 100 
+        : ((t as any).amount || 0);
       if (t.type === 'income') income += amount;
       if (t.type === 'expense') expense += amount;
     });
@@ -83,7 +85,7 @@ export default function AnalyticsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-h2 font-display text-foreground">Analytics</h1>
-          <p className="text-body text-ink-muted">Deep dive into your financial patterns.</p>
+          <p className="text-body text-muted-foreground">Deep dive into your financial patterns.</p>
         </div>
         
         <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
@@ -103,19 +105,19 @@ export default function AnalyticsPage() {
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 border-l-4 border-l-positive/50">
-          <p className="text-caption text-ink-muted mb-1">Total Income</p>
-          <p className="text-h3 font-display text-positive">{formatCurrency(stats.income, user?.currency)}</p>
+          <p className="text-caption text-muted-foreground mb-1">Total Income</p>
+          <p className="text-h3 font-display text-positive">{formatCurrency(Math.round(stats.income * 100), user?.currency)}</p>
         </Card>
         <Card className="p-4 border-l-4 border-l-negative/50">
-          <p className="text-caption text-ink-muted mb-1">Total Expenses</p>
-          <p className="text-h3 font-display text-negative">{formatCurrency(stats.expense, user?.currency)}</p>
+          <p className="text-caption text-muted-foreground mb-1">Total Expenses</p>
+          <p className="text-h3 font-display text-negative">{formatCurrency(Math.round(stats.expense * 100), user?.currency)}</p>
         </Card>
         <Card className="p-4 border-l-4 border-l-primary/50">
-          <p className="text-caption text-ink-muted mb-1">Net Savings</p>
-          <p className="text-h3 font-display text-foreground">{formatCurrency(stats.savings, user?.currency)}</p>
+          <p className="text-caption text-muted-foreground mb-1">Net Savings</p>
+          <p className="text-h3 font-display text-foreground">{formatCurrency(Math.round(stats.savings * 100), user?.currency)}</p>
         </Card>
         <Card className="p-4 border-l-4 border-l-accent/50">
-          <p className="text-caption text-ink-muted mb-1">Savings Rate</p>
+          <p className="text-caption text-muted-foreground mb-1">Savings Rate</p>
           <p className="text-h3 font-display text-foreground">{stats.savingsRate.toFixed(1)}%</p>
         </Card>
       </div>
@@ -131,3 +133,4 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+

@@ -49,7 +49,10 @@ export function OverviewCharts({ transactions, currency }: OverviewChartsProps) 
       const key = t.date.substring(0, 7); // yyyy-MM
       if (dataMap.has(key)) {
         const current = dataMap.get(key)!;
-        const amount = t.amountMinorUnits / 100;
+        const amount = t.amountMinorUnits !== undefined 
+          ? t.amountMinorUnits / 100 
+          : ((t as any).amount || 0);
+        
         if (t.type === 'income') {
           current.income += amount;
         } else {
@@ -69,7 +72,7 @@ export function OverviewCharts({ transactions, currency }: OverviewChartsProps) 
           <p className="font-medium text-foreground mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} style={{ color: entry.color }} className="text-sm">
-              {entry.name}: {formatCurrency(entry.value, currency)}
+              {entry.name}: {formatCurrency(Math.round(entry.value * 100), currency)}
             </p>
           ))}
         </div>

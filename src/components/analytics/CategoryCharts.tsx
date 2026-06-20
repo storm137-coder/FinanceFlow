@@ -19,7 +19,9 @@ export function CategoryCharts({ transactions, currency }: CategoryChartsProps) 
     const categoryTotals = new Map<string, number>();
 
     expenses.forEach(t => {
-      const amount = t.amountMinorUnits / 100;
+      const amount = t.amountMinorUnits !== undefined 
+        ? t.amountMinorUnits / 100 
+        : ((t as any).amount || 0);
       categoryTotals.set(t.categoryId, (categoryTotals.get(t.categoryId) || 0) + amount);
     });
 
@@ -46,8 +48,8 @@ export function CategoryCharts({ transactions, currency }: CategoryChartsProps) 
       return (
         <div className="bg-surface border border-border p-3 rounded-lg shadow-lg">
           <p className="font-medium text-foreground">{payload[0].name}</p>
-          <p className="text-sm text-ink-muted">
-            {formatCurrency(payload[0].value, currency)}
+          <p className="text-sm text-muted-foreground">
+            {formatCurrency(Math.round(payload[0].value * 100), currency)}
           </p>
         </div>
       );
@@ -60,7 +62,7 @@ export function CategoryCharts({ transactions, currency }: CategoryChartsProps) 
       <h3 className="text-h3 font-display text-foreground mb-6">Spending by Category</h3>
       
       {categoryData.length === 0 ? (
-        <div className="h-72 flex items-center justify-center text-ink-muted">
+        <div className="h-72 flex items-center justify-center text-muted-foreground">
           No expenses for this period.
         </div>
       ) : (
@@ -110,3 +112,4 @@ export function CategoryCharts({ transactions, currency }: CategoryChartsProps) 
     </Card>
   );
 }
+

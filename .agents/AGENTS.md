@@ -1,0 +1,1 @@
+- After making any fix or successfully completing a task, always automatically commit everything and push to the remote git repository.

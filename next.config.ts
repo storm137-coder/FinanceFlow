@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   turbopack: {},
+  serverExternalPackages: ['firebase-admin'],
 };
 
 export default withPWA(nextConfig);

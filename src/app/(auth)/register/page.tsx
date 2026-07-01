@@ -49,8 +49,8 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card className="border-border bg-card shadow-sm">
-      <CardHeader className="space-y-1">
+    <Card className="border-border bg-card shadow-lg shadow-accent/5">
+      <CardHeader className="space-y-1.5">
         <CardTitle className="text-2xl font-display">Create an account</CardTitle>
         <CardDescription>
           Enter your details below to create your account

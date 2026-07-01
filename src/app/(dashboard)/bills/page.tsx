@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { BillForm } from '@/components/finance/BillForm';
 import { formatCurrency } from '@/lib/currency';
+import { formatDateSafe, safeParseDate } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 import { Plus, Edit2, Trash2, Calendar, AlertCircle, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Bill } from '@/types';
@@ -35,7 +36,8 @@ export default function BillsPage() {
       if (b.status === 'paid') totalPaid += b.amount;
       if (b.status === 'pending' || b.status === 'overdue') {
         totalDue += b.amount;
-        const days = differenceInDays(new Date(b.dueDate), new Date());
+        const dueDate = safeParseDate(b.dueDate);
+        const days = dueDate ? differenceInDays(dueDate, new Date()) : Infinity;
         if (days >= 0 && days <= 7) upcoming += 1;
       }
     });
@@ -69,30 +71,36 @@ export default function BillsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 border-l-4 border-l-warning/50">
-          <p className="text-caption text-muted-foreground mb-1">Total Due</p>
+        <Card className="p-5 border-0 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-warning" />
+          <p className="text-caption text-muted-foreground mb-1.5">Total Due</p>
           <p className="text-h3 font-display text-warning truncate">{formatCurrency(stats.totalDue, user?.currency)}</p>
         </Card>
-        <Card className="p-4 border-l-4 border-l-positive/50">
-          <p className="text-caption text-muted-foreground mb-1">Paid This Month</p>
+        <Card className="p-5 border-0 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-positive" />
+          <p className="text-caption text-muted-foreground mb-1.5">Paid This Month</p>
           <p className="text-h3 font-display text-positive truncate">{formatCurrency(stats.totalPaid, user?.currency)}</p>
         </Card>
-        <Card className="p-4 border-l-4 border-l-primary/50">
-          <p className="text-caption text-muted-foreground mb-1">Upcoming (7 days)</p>
+        <Card className="p-5 border-0 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-accent" />
+          <p className="text-caption text-muted-foreground mb-1.5">Upcoming (7 days)</p>
           <p className="text-h3 font-display text-foreground">{stats.upcoming} bills</p>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {bills.length === 0 ? (
-          <div className="col-span-full py-12 text-center bg-surface border border-border border-dashed rounded-xl">
-            <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-50" />
-            <h3 className="text-h3 font-display text-foreground mb-2">No Bills Found</h3>
-            <p className="text-body text-muted-foreground max-w-sm mx-auto">You haven't added any bills or subscriptions yet. Add one to start tracking your due dates.</p>
+          <div className="col-span-full py-16 text-center bg-card border border-border border-dashed rounded-xl">
+            <div className="mb-4 h-14 w-14 mx-auto rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+              <Calendar className="h-6 w-6 text-muted-foreground/40" />
+            </div>
+            <h3 className="font-semibold text-foreground mb-1">No Bills Found</h3>
+            <p className="text-sm text-muted-foreground max-w-sm mx-auto">You haven&apos;t added any bills or subscriptions yet. Add one to start tracking your due dates.</p>
           </div>
         ) : (
           bills.map(bill => {
-            const daysUntilDue = differenceInDays(new Date(bill.dueDate), new Date());
+            const dueDate = safeParseDate(bill.dueDate);
+            const daysUntilDue = dueDate ? differenceInDays(dueDate, new Date()) : Infinity;
             const isOverdue = bill.status !== 'paid' && daysUntilDue < 0;
             const isDueSoon = bill.status !== 'paid' && daysUntilDue >= 0 && daysUntilDue <= 3;
 
@@ -100,27 +108,27 @@ export default function BillsPage() {
               <Card key={bill.id} className="p-5 flex flex-col justify-between">
                 <div>
                   <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h4 className="font-medium text-foreground text-lg">{bill.name}</h4>
-                      <p className="text-sm text-muted-foreground">{bill.category}</p>
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-foreground truncate">{bill.name}</h4>
+                      <p className="text-sm text-muted-foreground mt-0.5">{bill.category}</p>
                     </div>
                     {bill.status === 'paid' ? (
-                      <span className="bg-positive/10 text-positive text-xs px-2 py-1 rounded-full flex items-center gap-1 font-medium"><CheckCircle2 className="w-3 h-3"/> Paid</span>
+                      <span className="bg-positive-soft text-positive text-xs px-2.5 py-1 rounded-full flex items-center gap-1 font-medium shrink-0"><CheckCircle2 className="w-3 h-3"/> Paid</span>
                     ) : isOverdue ? (
-                      <span className="bg-negative/10 text-negative text-xs px-2 py-1 rounded-full flex items-center gap-1 font-medium"><AlertCircle className="w-3 h-3"/> Overdue</span>
+                      <span className="bg-negative-soft text-negative text-xs px-2.5 py-1 rounded-full flex items-center gap-1 font-medium shrink-0"><AlertCircle className="w-3 h-3"/> Overdue</span>
                     ) : (
-                      <span className="bg-warning/10 text-warning text-xs px-2 py-1 rounded-full font-medium">Due in {daysUntilDue}d</span>
+                      <span className="bg-warning-soft text-warning text-xs px-2.5 py-1 rounded-full font-medium shrink-0">Due in {daysUntilDue}d</span>
                     )}
                   </div>
-                  
+
                   <p className="text-2xl font-display text-foreground mb-4">
                     {formatCurrency(bill.amount, user?.currency)}
                     {bill.recurring && <span className="text-sm font-normal text-muted-foreground ml-1">/{bill.recurringType === 'monthly' ? 'mo' : bill.recurringType}</span>}
                   </p>
-                  
+
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
                     <Calendar className="w-4 h-4" />
-                    Due: {format(new Date(bill.dueDate), 'MMM dd, yyyy')}
+                    Due: {formatDateSafe(bill.dueDate, 'MMM dd, yyyy')}
                   </div>
                 </div>
 
@@ -131,7 +139,7 @@ export default function BillsPage() {
                     </Button>
                   </div>
                   {bill.status !== 'paid' && (
-                    <Button size="sm" variant="outline" className="text-positive border-positive/30 hover:bg-positive/10" onClick={() => handleMarkPaid(bill)}>
+                    <Button size="sm" className="text-positive-foreground bg-positive hover:bg-positive/90 border-0" onClick={() => handleMarkPaid(bill)}>
                       Mark Paid
                     </Button>
                   )}

@@ -8,6 +8,7 @@ import { TrendCharts } from '@/components/analytics/TrendCharts';
 import { useCollection } from '@/hooks/useCollection';
 import { Transaction } from '@/types';
 import { formatCurrency } from '@/lib/currency';
+import { safeParseDate } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -40,7 +41,10 @@ export default function AnalyticsPage() {
         break;
     }
     
-    return transactions.filter(t => new Date(t.date) >= cutoffDate);
+    return transactions.filter(t => {
+      const d = safeParseDate(t.date);
+      return d && d >= cutoffDate;
+    });
   }, [transactions, timeRange]);
 
   // Calculate high-level stats
@@ -67,9 +71,9 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-surface-sunken rounded w-1/4" />
+        <div className="h-8 bg-surface-sunken rounded w-1/4" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-surface-sunken rounded-xl" />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="h-28 bg-surface-sunken rounded-xl" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="h-80 bg-surface-sunken rounded-xl" />
@@ -104,20 +108,24 @@ export default function AnalyticsPage() {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 border-l-4 border-l-positive/50">
-          <p className="text-caption text-muted-foreground mb-1">Total Income</p>
+        <Card className="p-5 border-0 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-positive" />
+          <p className="text-caption text-muted-foreground mb-1.5">Total Income</p>
           <p className="text-h3 font-display text-positive">{formatCurrency(Math.round(stats.income * 100), user?.currency)}</p>
         </Card>
-        <Card className="p-4 border-l-4 border-l-negative/50">
-          <p className="text-caption text-muted-foreground mb-1">Total Expenses</p>
+        <Card className="p-5 border-0 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-negative" />
+          <p className="text-caption text-muted-foreground mb-1.5">Total Expenses</p>
           <p className="text-h3 font-display text-negative">{formatCurrency(Math.round(stats.expense * 100), user?.currency)}</p>
         </Card>
-        <Card className="p-4 border-l-4 border-l-primary/50">
-          <p className="text-caption text-muted-foreground mb-1">Net Savings</p>
+        <Card className="p-5 border-0 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-accent" />
+          <p className="text-caption text-muted-foreground mb-1.5">Net Savings</p>
           <p className="text-h3 font-display text-foreground">{formatCurrency(Math.round(stats.savings * 100), user?.currency)}</p>
         </Card>
-        <Card className="p-4 border-l-4 border-l-accent/50">
-          <p className="text-caption text-muted-foreground mb-1">Savings Rate</p>
+        <Card className="p-5 border-0 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-accent" />
+          <p className="text-caption text-muted-foreground mb-1.5">Savings Rate</p>
           <p className="text-h3 font-display text-foreground">{stats.savingsRate.toFixed(1)}%</p>
         </Card>
       </div>

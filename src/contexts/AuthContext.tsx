@@ -56,15 +56,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (fbUser) {
         setFirebaseUser(fbUser);
         
-        // Sync with server session cookie
-        const idToken = await fbUser.getIdToken();
-        await fetch('/api/auth/session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ idToken }),
-        });
+        // Sync with server session cookie (best-effort — may fail on restored sessions)
+        try {
+          const idToken = await fbUser.getIdToken();
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken }),
+          });
+        } catch {
+          // Silently ignore — existing cookie continues to work
+        }
 
         try {
           const profileDoc = await getDoc(doc(db, 'users', fbUser.uid));

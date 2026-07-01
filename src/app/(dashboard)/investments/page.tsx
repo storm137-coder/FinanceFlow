@@ -21,7 +21,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useAccounts } from "@/hooks/useAccounts";
-import { format } from "date-fns";
+import { formatDateSafe } from '@/lib/utils';
 
 export default function InvestmentsPage() {
   const { data: investments, isLoading } = useInvestments();
@@ -45,7 +45,7 @@ export default function InvestmentsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-display font-display text-foreground">
             Investments
@@ -90,35 +90,36 @@ export default function InvestmentsPage() {
           Loading portfolio...
         </div>
       ) : !investments || investments.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 bg-card border border-border rounded-lg text-center shadow-sm">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <Wallet className="h-8 w-8 text-primary" />
+        <div className="flex flex-col items-center justify-center py-16 bg-card border border-border border-dashed rounded-xl text-center">
+          <div className="mb-4 h-14 w-14 mx-auto rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+            <Wallet className="h-6 w-6 text-muted-foreground/40" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">No investments yet</h3>
-          <p className="text-muted-foreground mb-6 max-w-md">
+          <h3 className="font-semibold text-foreground mb-1">No investments yet</h3>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md">
             Start tracking your stocks, crypto, or real estate to see your net
             worth grow.
           </p>
-          <Button onClick={() => setIsModalOpen(true)}>Add an asset</Button>
+          <Button onClick={() => setIsModalOpen(true)} size="sm">Add an asset</Button>
         </div>
       ) : (
         <>
           {/* Portfolio Overview Widget */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-card border border-border rounded-lg p-6 shadow-sm min-w-0">
-              <p className="text-sm text-muted-foreground mb-2">Total Invested</p>
-              <p className="text-3xl font-display font-semibold truncate">{formatCurrency(totalInvested, defaultCurrency)}</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm relative overflow-hidden card-hover-effect">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-accent/60" />
+              <p className="text-caption text-muted-foreground mb-1.5">Total Invested</p>
+              <p className="text-figure-lg font-display font-bold text-foreground truncate">{formatCurrency(totalInvested, defaultCurrency)}</p>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-6 shadow-sm min-w-0">
-              <p className="text-sm text-muted-foreground mb-2">Current Value</p>
-              <p className="text-3xl font-display font-semibold truncate">{formatCurrency(totalCurrentValue, defaultCurrency)}</p>
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm relative overflow-hidden card-hover-effect">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-primary" />
+              <p className="text-caption text-muted-foreground mb-1.5">Current Value</p>
+              <p className="text-figure-lg font-display font-bold text-foreground truncate">{formatCurrency(totalCurrentValue, defaultCurrency)}</p>
             </div>
 
-            <div
-              className={`border rounded-lg p-6 shadow-sm ${isPositiveROI ? "bg-positive/5 border-positive/20" : "bg-negative/5 border-negative/20"}`}
-            >
-              <p className="text-sm text-muted-foreground mb-2">Total Return</p>
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm relative overflow-hidden card-hover-effect">
+              <div className={`absolute top-0 left-0 right-0 h-1 ${isPositiveROI ? 'bg-positive' : 'bg-negative'}`} />
+              <p className="text-caption text-muted-foreground mb-1.5">Total Return</p>
               <div className="flex items-center gap-3">
                 <p
                   className={`text-3xl font-display font-semibold ${isPositiveROI ? "text-positive" : "text-negative"}`}
@@ -184,7 +185,7 @@ export default function InvestmentsPage() {
                           <p className="font-medium">{inv.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {inv.broker ||
-                              format(new Date(inv.purchaseDate), "MMM d, yyyy")}
+                              formatDateSafe(inv.purchaseDate, "MMM d, yyyy")}
                           </p>
                         </td>
                         <td className="px-6 py-4 capitalize text-muted-foreground">

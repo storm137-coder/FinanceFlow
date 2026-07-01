@@ -156,14 +156,15 @@ export default function SettingsPage() {
           </Card>
 
           {/* Danger Zone */}
-          <Card className="p-6 border-danger/20">
-            <h2 className="text-h3 font-display text-danger mb-4">Danger Zone</h2>
+          <Card className="p-6 relative overflow-hidden border-negative/20">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-negative" />
+            <h2 className="text-h3 font-display text-negative mb-4">Danger Zone</h2>
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
               <div>
                 <p className="font-medium text-foreground">Sign Out</p>
                 <p className="text-caption text-muted-foreground">Sign out of your current session on this device.</p>
               </div>
-              <Button variant="outline" className="text-danger hover:bg-danger/10 border-danger/20" onClick={logout}>
+              <Button variant="outline" className="text-negative hover:bg-negative-soft border-negative/20 shrink-0" onClick={logout}>
                 Sign Out
               </Button>
             </div>

@@ -2,6 +2,12 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/* -------------------------------------------------------------------------- */
+/*  Card — elevated surface container with hover lift                        */
+/* -------------------------------------------------------------------------- */
+// Usage: <Card> wraps children in a rounded card with border, bg, shadow & hover lift.
+// To opt out of the hover effect, add `className="card-hover-effect-none"`
+
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -9,7 +15,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow",
+      "rounded-xl border border-border bg-card text-card-foreground shadow-sm card-hover-effect relative",
       className
     )}
     {...props}

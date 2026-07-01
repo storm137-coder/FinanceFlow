@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { formatCurrency } from '@/lib/currency';
 import { exportToCSV } from '@/lib/csv';
 import { FileText, Download, FileSpreadsheet, Filter } from 'lucide-react';
-import { format, subDays, subMonths, startOfYear, isAfter, isBefore } from 'date-fns';
+import { formatDateSafe, safeParseDate } from '@/lib/utils';
+import { subDays, subMonths, startOfYear, isAfter, isBefore } from 'date-fns';
 
 export default function ReportsPage() {
   const { data, isLoading } = useTransactions();
@@ -37,8 +38,15 @@ export default function ReportsPage() {
     }
 
     return transactions
-      .filter(t => isAfter(new Date(t.date), startDate))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      .filter(t => {
+        const d = safeParseDate(t.date);
+        return d && isAfter(d, startDate);
+      })
+      .sort((a, b) => {
+        const da = safeParseDate(a.date);
+        const db = safeParseDate(b.date);
+        return (db?.getTime() ?? 0) - (da?.getTime() ?? 0);
+      });
   }, [data, dateRange]);
 
   // Calculate summaries
@@ -55,7 +63,7 @@ export default function ReportsPage() {
 
   const handleExportCSV = () => {
     const data = filteredTransactions.map(t => ({
-      Date: format(new Date(t.date), 'yyyy-MM-dd'),
+      Date: formatDateSafe(t.date, 'yyyy-MM-dd'),
       Type: t.type.toUpperCase(),
       Category: t.categoryId,
       Amount: (t.amountMinorUnits / 100).toFixed(2), // convert minor units for export
@@ -83,10 +91,10 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Configuration Panel */}
         <div className="md:col-span-1 space-y-6">
-          <div className="bg-card border border-border rounded-lg p-6 shadow-sm space-y-6">
+          <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6 card-hover-effect">
             <div className="flex items-center gap-2 mb-4">
               <Filter className="w-5 h-5 text-primary" />
-              <h2 className="font-semibold text-lg">Report Settings</h2>
+              <h2 className="font-semibold text-lg text-foreground">Report Settings</h2>
             </div>
             
             <div className="space-y-2">
@@ -143,8 +151,8 @@ export default function ReportsPage() {
 
         {/* Preview Panel */}
         <div className="md:col-span-2 space-y-6">
-          <div className="bg-card border border-border rounded-lg p-6 shadow-sm min-h-[400px]">
-            <h2 className="font-semibold text-lg mb-6">Report Preview</h2>
+          <div className="bg-card border border-border rounded-xl p-6 shadow-sm min-h-[400px] card-hover-effect">
+            <h2 className="font-semibold text-lg text-foreground mb-6">Report Preview</h2>
             
             {isLoading ? (
               <div className="animate-pulse space-y-4">
@@ -195,7 +203,7 @@ export default function ReportsPage() {
                     <tbody className="divide-y divide-border bg-card">
                       {filteredTransactions.slice(0, 5).map(t => (
                         <tr key={t.id}>
-                          <td className="px-4 py-3">{format(new Date(t.date), 'MMM d, yyyy')}</td>
+                          <td className="px-4 py-3">{formatDateSafe(t.date, 'MMM d, yyyy')}</td>
                           <td className="px-4 py-3 capitalize">
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-positive/10 text-positive' : 'bg-negative/10 text-negative'}`}>
                               {t.type}

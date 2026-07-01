@@ -4,11 +4,11 @@ import { useGoals, useUpdateGoalProgress } from '@/hooks/useGoals';
 import { useAccounts } from '@/hooks/useAccounts';
 import { GoalForm } from '@/components/finance/GoalForm';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatCurrency, toMinorUnits } from '@/lib/currency';
+import { formatDateSafe } from '@/lib/utils';
 import { PlusCircle, Target, ArrowUpRight, DollarSign, Edit2 } from 'lucide-react';
 import { useState } from 'react';
-import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -69,16 +69,12 @@ export default function GoalsPage() {
           if (!open) {
             setIsDialogOpen(false);
             setEditingGoal(null);
-          } else {
-            setIsDialogOpen(true);
           }
         }}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingGoal(null)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Goal
-            </Button>
-          </DialogTrigger>
+          <Button onClick={() => { setEditingGoal(null); setIsDialogOpen(true); }}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            New Goal
+          </Button>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingGoal ? 'Edit Goal' : 'Create Goal'}</DialogTitle>
@@ -123,7 +119,7 @@ export default function GoalsPage() {
                   <div>
                     <h3 className="font-semibold text-lg">{goal.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Target Date: {format(new Date(goal.deadline), 'MMM d, yyyy')}
+                      Target Date: {formatDateSafe(goal.deadline, 'MMM d, yyyy', 'No deadline')}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -132,7 +128,7 @@ export default function GoalsPage() {
                       goal.priority === 'medium' ? 'bg-accent/10 text-accent' :
                       'bg-secondary text-muted-foreground'
                     }`}>
-                      {goal.priority.toUpperCase()}
+                      {(goal.priority || 'MEDIUM').toUpperCase()}
                     </div>
                     <Button 
                       variant="ghost" 

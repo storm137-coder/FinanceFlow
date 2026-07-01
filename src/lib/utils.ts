@@ -3,6 +3,7 @@ import {
   formatDistanceToNow,
   isToday,
   isYesterday,
+  isValid,
   parseISO,
   differenceInDays,
 } from 'date-fns';
@@ -82,6 +83,40 @@ export function formatRelativeDate(date: string | Date): string {
   if (isYesterday(parsed)) return 'Yesterday';
 
   return formatDistanceToNow(parsed, { addSuffix: true });
+}
+
+/* -------------------------------------------------------------------------- */
+/*                        SAFE DATE FORMATTING                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Converts a value to a Date, handling Firestore Timestamps (objects with a
+ * `toDate()` method), ISO strings, numbers, and existing Date instances.
+ * Returns `null` for invalid/null/undefined input.
+ */
+export function safeParseDate(value: unknown): Date | null {
+  if (value == null) return null;
+  // Firestore Timestamp or similar (has toDate method)
+  if (typeof (value as any).toDate === 'function') return (value as any).toDate();
+  // Already a Date
+  if (value instanceof Date) return value;
+  // String or number
+  const d = new Date(value as any);
+  return isValid(d) ? d : null;
+}
+
+/**
+ * Formats a date safely, returning `fallback` when the input is invalid.
+ * Handles Firestore Timestamps, ISO strings, numbers, and Date objects.
+ */
+export function formatDateSafe(
+  value: unknown,
+  fmt: string,
+  fallback = '—',
+): string {
+  const d = safeParseDate(value);
+  if (!d) return fallback;
+  return format(d, fmt);
 }
 
 /* -------------------------------------------------------------------------- */

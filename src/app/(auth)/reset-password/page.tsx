@@ -50,8 +50,8 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <Card className="border-border bg-card shadow-sm">
-      <CardHeader className="space-y-1">
+    <Card className="border-border bg-card shadow-lg shadow-accent/5">
+      <CardHeader className="space-y-1.5">
         <CardTitle className="text-2xl font-display">Reset password</CardTitle>
         <CardDescription>
           Enter your email address and we will send you a password reset link

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CURRENCIES } from '@/lib/constants';
 import toast from 'react-hot-toast';
+import { NotificationManager } from '@/components/finance/NotificationManager';
 import { useTheme } from 'next-themes';
 import { User, Settings, Palette, Globe } from 'lucide-react';
 
@@ -169,6 +170,11 @@ export default function SettingsPage() {
               </Button>
             </div>
           </Card>
+
+          {/* Notifications Section */}
+          <section className="animate-in-d2">
+            <NotificationManager />
+          </section>
 
         </div>
       </div>

@@ -3,6 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics, isSupported, type Analytics } from 'firebase/analytics';
+import { getMessaging, isSupported as isMessagingSupported, type Messaging } from 'firebase/messaging';
 
 /**
  * Firebase configuration sourced from environment variables.
@@ -41,6 +42,17 @@ if (typeof window !== 'undefined') {
   isSupported().then((supported) => {
     if (supported) {
       analytics = getAnalytics(app);
+    }
+  });
+}
+
+/** Firebase Messaging instance (Browser only) */
+export let messaging: Messaging | null = null;
+
+if (typeof window !== 'undefined') {
+  isMessagingSupported().then((supported) => {
+    if (supported) {
+      messaging = getMessaging(app);
     }
   });
 }

@@ -44,7 +44,6 @@ if (typeof window !== 'undefined') {
     }
   });
 }
-
 /**
  * Enable IndexedDB-backed offline persistence for Firestore.
  *

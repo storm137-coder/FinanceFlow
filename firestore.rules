@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User profile document
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      
+      // Accounts collection nested under user
+      match /accounts/{accountId} {
+        allow read, update, delete: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.balanceMinorUnits is int
+          && request.resource.data.currency.matches('^[A-Z]{3}$');
+      }
+
+      // Transactions collection nested under user
+      match /transactions/{transactionId} {
+        allow read, update, delete: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.amountMinorUnits is int
+          && request.resource.data.amountMinorUnits >= 0
+          && request.resource.data.currency.matches('^[A-Z]{3}$')
+          && request.resource.data.type in ['income', 'expense', 'transfer'];
+      }
+      
+      // Budgets collection
+      match /budgets/{budgetId} {
+        allow read, update, delete: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.amountMinorUnits is int
+          && request.resource.data.amountMinorUnits >= 0;
+      }
+
+      // Goals collection
+      match /goals/{goalId} {
+        allow read, update, delete: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.targetMinorUnits is int
+          && request.resource.data.targetMinorUnits > 0
+          && request.resource.data.currentMinorUnits is int
+          && request.resource.data.currentMinorUnits >= 0;
+      }
+      
+      // Loans collection
+      match /loans/{loanId} {
+        allow read, update, delete: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.borrowedAmountMinorUnits is int
+          && request.resource.data.borrowedAmountMinorUnits > 0
+          && request.resource.data.interestRate is number
+          && request.resource.data.interestRate >= 0
+          && request.resource.data.totalInstallments is int
+          && request.resource.data.totalInstallments > 0;
+      }
+
+      // Investments collection
+      match /investments/{invId} {
+        allow read, update, delete: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.investedAmountMinorUnits is int
+          && request.resource.data.investedAmountMinorUnits >= 0
+          && request.resource.data.currentValueMinorUnits is int
+          && request.resource.data.currentValueMinorUnits >= 0;
+      }
+      
+      // Wishlist collection
+      match /wishlist/{itemId} {
+        allow read, update, delete: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.priceMinorUnits is int
+          && request.resource.data.priceMinorUnits >= 0;
+      }
+      
+      // Bills collection
+      match /bills/{billId} {
+        allow read, update, delete: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.amount is number
+          && request.resource.data.amount >= 0;
+      }
+
+      // Allow cascading rules for other collections in the future
+      match /{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+  }
+}

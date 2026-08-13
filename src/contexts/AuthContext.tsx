@@ -69,7 +69,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         try {
-          const profileDoc = await getDoc(doc(db, 'users', fbUser.uid));
+          // Add a 5-second timeout to prevent infinite loading if Firestore is uninitialized
+          const profileDoc = await Promise.race([
+            getDoc(doc(db, 'users', fbUser.uid)),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 5000))
+          ]);
           const profileData = profileDoc.data();
           setUser({
             uid: fbUser.uid,
@@ -81,7 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             language: profileData?.language || 'en',
             emailVerified: fbUser.emailVerified,
           });
-        } catch {
+        } catch (error) {
+          console.warn('Failed to fetch user profile, using defaults:', error);
           setUser({
             uid: fbUser.uid,
             email: fbUser.email,

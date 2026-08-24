@@ -3,9 +3,9 @@
 import { TransactionForm } from '@/components/finance/TransactionForm';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { PlusCircle, ArrowUpRight, ArrowDownRight, ArrowRightLeft, ArrowLeftRight, Edit2 } from 'lucide-react';
+import { PlusCircle, ArrowUpRight, ArrowDownRight, ArrowRightLeft, ArrowLeftRight, Edit2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useTransactions } from '@/hooks/useTransactions';
+import { useTransactions, useDeleteTransaction } from '@/hooks/useTransactions';
 import { formatCurrency } from '@/lib/currency';
 import { formatDateSafe } from '@/lib/utils';
 
@@ -13,6 +13,7 @@ export default function TransactionsPage() {
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useTransactions();
+  const { mutate: deleteTransaction } = useDeleteTransaction();
 
   // Flatten infinite query pages into a single array
   const transactions = data?.pages.flatMap(page => page.transactions) || [];
@@ -121,17 +122,31 @@ export default function TransactionsPage() {
                         {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
                         {formatCurrency((tx.amountMinorUnits !== undefined ? tx.amountMinorUnits : ((tx as any).amount || 0) * 100), tx.currency)}
                       </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => {
-                          setSelectedTransaction(tx);
-                          setIsTransactionModalOpen(true);
-                        }}
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                          onClick={() => {
+                            setSelectedTransaction(tx);
+                            setIsTransactionModalOpen(true);
+                          }}
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this transaction?')) {
+                              deleteTransaction(tx.id!);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </li>

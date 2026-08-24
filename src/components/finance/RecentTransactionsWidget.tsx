@@ -1,13 +1,16 @@
 'use client';
 
 import { useDashboard } from '@/hooks/useDashboard';
+import { useDeleteTransaction } from '@/hooks/useTransactions';
+import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/currency';
 import { formatDateSafe } from '@/lib/utils';
-import { ArrowUpRight, ArrowDownRight, ArrowRightLeft, ArrowLeftRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, ArrowRightLeft, ArrowLeftRight, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 export function RecentTransactionsWidget() {
   const { recentTransactions, isLoading } = useDashboard();
+  const { mutate: deleteTransaction } = useDeleteTransaction();
 
   if (isLoading) {
     return (
@@ -45,7 +48,7 @@ export function RecentTransactionsWidget() {
       ) : (
         <ul className="space-y-1 flex-1">
           {recentTransactions.map(tx => (
-            <li key={tx.id} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-surface-sunken/60 transition-all duration-150 -mx-2">
+            <li key={tx.id} className="group flex items-center justify-between p-2.5 rounded-lg hover:bg-surface-sunken/60 transition-all duration-150 -mx-2">
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0
                   ${tx.type === 'income' ? 'bg-positive-soft text-positive' :
@@ -64,9 +67,23 @@ export function RecentTransactionsWidget() {
                   </p>
                 </div>
               </div>
-              <div className={`font-mono text-sm font-medium tabular-nums shrink-0 ml-3 ${tx.type === 'income' ? 'text-positive' : tx.type === 'expense' ? 'text-negative' : 'text-foreground'}`}>
-                {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
-                {formatCurrency((tx.amountMinorUnits !== undefined ? tx.amountMinorUnits : ((tx as any).amount || 0) * 100), tx.currency)}
+              <div className="flex items-center gap-3 shrink-0 ml-3">
+                <div className={`font-mono text-sm font-medium tabular-nums ${tx.type === 'income' ? 'text-positive' : tx.type === 'expense' ? 'text-negative' : 'text-foreground'}`}>
+                  {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
+                  {formatCurrency((tx.amountMinorUnits !== undefined ? tx.amountMinorUnits : ((tx as any).amount || 0) * 100), tx.currency)}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this transaction?')) {
+                      deleteTransaction(tx.id!);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </li>
           ))}

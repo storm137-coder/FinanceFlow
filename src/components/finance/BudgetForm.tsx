@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { budgetSchema, BudgetFormData } from '@/validations/schemas';
@@ -30,7 +30,7 @@ export function BudgetForm({ onSuccess, initialData }: BudgetFormProps) {
 
   const {
     register,
-    handleSubmit,
+    watch,
     setValue,
     formState: { errors },
     reset
@@ -48,6 +48,22 @@ export function BudgetForm({ onSuccess, initialData }: BudgetFormProps) {
       spent: 0,
     }
   });
+  const currentMonth = watch('month');
+  const currentYear = watch('year');
+
+  useEffect(() => {
+    const m = Number(currentMonth);
+    const y = Number(currentYear);
+
+    if (m > 11) {
+      setValue('month', 0);
+      setValue('year', y + 1);
+    } else if (m < 0) {
+      setValue('month', 11);
+      setValue('year', y - 1);
+    }
+  }, [currentMonth, currentYear, setValue]);
+
 
   const onSubmit = async (data: BudgetFormData) => {
     setIsSubmitting(true);
@@ -123,11 +139,11 @@ export function BudgetForm({ onSuccess, initialData }: BudgetFormProps) {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="month">Month (0-11)</Label>
-          <Input id="month" type="number" min="0" max="11" {...register('month')} />
+          <Input id="month" type="number" {...register('month', { valueAsNumber: true })} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="year">Year</Label>
-          <Input id="year" type="number" {...register('year')} />
+          <Input id="year" type="number" {...register('year', { valueAsNumber: true })} />
         </div>
       </div>
 

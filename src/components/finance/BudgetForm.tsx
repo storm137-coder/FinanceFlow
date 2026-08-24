@@ -32,6 +32,7 @@ export function BudgetForm({ onSuccess, initialData }: BudgetFormProps) {
     register,
     watch,
     setValue,
+    handleSubmit,
     formState: { errors },
     reset
   } = useForm({

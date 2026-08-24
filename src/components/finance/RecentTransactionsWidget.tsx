@@ -75,7 +75,7 @@ export function RecentTransactionsWidget() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive transition-colors"
                   onClick={() => {
                     if (window.confirm('Are you sure you want to delete this transaction?')) {
                       deleteTransaction(tx.id!);

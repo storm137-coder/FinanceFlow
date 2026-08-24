@@ -122,7 +122,7 @@ export default function TransactionsPage() {
                         {tx.type === 'income' ? '+' : tx.type === 'expense' ? '-' : ''}
                         {formatCurrency((tx.amountMinorUnits !== undefined ? tx.amountMinorUnits : ((tx as any).amount || 0) * 100), tx.currency)}
                       </span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"

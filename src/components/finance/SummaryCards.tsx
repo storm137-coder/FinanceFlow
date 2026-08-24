@@ -52,7 +52,7 @@ export function SummaryCards() {
 
             <Dialog open={isReconcileModalOpen} onOpenChange={setIsReconcileModalOpen}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors">
                   <Edit2 className="h-3.5 w-3.5" />
                 </Button>
               </DialogTrigger>

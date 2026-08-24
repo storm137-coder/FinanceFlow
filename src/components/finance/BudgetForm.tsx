@@ -139,8 +139,23 @@ export function BudgetForm({ onSuccess, initialData }: BudgetFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="month">Month (0-11)</Label>
-          <Input id="month" type="number" {...register('month', { valueAsNumber: true })} />
+          <Label htmlFor="month">Month</Label>
+          <Select 
+            onValueChange={(val) => setValue('month', parseInt(val, 10))} 
+            value={currentMonth?.toString()}
+          >
+            <SelectTrigger id="month">
+              <SelectValue placeholder="Select Month" />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 12 }, (_, i) => (
+                <SelectItem key={i} value={i.toString()}>
+                  {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.month && <p className="text-sm text-destructive">{errors.month.message}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor="year">Year</Label>

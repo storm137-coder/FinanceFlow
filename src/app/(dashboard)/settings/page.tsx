@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   
   const [displayName, setDisplayName] = useState(user?.displayName || '');
-  const [currency, setCurrency] = useState(user?.currency || 'USD');
+  const [currency, setCurrency] = useState(user?.currency || 'INR');
   const [loading, setLoading] = useState(false);
 
   const handleSaveProfile = async (e: React.FormEvent) => {

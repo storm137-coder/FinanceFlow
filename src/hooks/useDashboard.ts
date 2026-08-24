@@ -16,7 +16,7 @@ export function useDashboard() {
     let totalBalanceMinorUnits = 0;
     
     // Default to USD for the display currency if no accounts, otherwise pick the first account's currency
-    const displayCurrency = accounts && accounts.length > 0 ? accounts[0].currency : 'USD';
+    const displayCurrency = accounts && accounts.length > 0 ? accounts[0].currency : 'INR';
 
     if (accounts) {
       totalBalanceMinorUnits = accounts.reduce((acc, account) => acc + account.balanceMinorUnits, 0);

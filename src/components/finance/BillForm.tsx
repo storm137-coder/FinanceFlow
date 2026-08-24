@@ -21,7 +21,7 @@ interface BillFormProps {
 
 export function BillForm({ initialData, onSuccess, onCancel }: BillFormProps) {
   const { user } = useAuth();
-  const defaultCurrency = user?.currency || 'USD';
+  const defaultCurrency = user?.currency || 'INR';
   const { addBill } = useBills();
   const { mutateAsync: updateBill } = useUpdateBill();
   const { mutateAsync: deleteBill } = useDeleteBill();

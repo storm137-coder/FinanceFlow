@@ -16,7 +16,7 @@ export default function WishlistPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   
-  const defaultCurrency = accounts?.[0]?.currency || 'USD';
+  const defaultCurrency = accounts?.[0]?.currency || 'INR';
 
   const markAsPurchased = async (item: any) => {
     await updateItem({ id: item.id, status: 'purchased' });

@@ -25,7 +25,7 @@ export default function GoalsPage() {
   const [updateAction, setUpdateAction] = useState<'add' | 'remove'>('add');
   const updateProgress = useUpdateGoalProgress();
 
-  const defaultCurrency = accounts && accounts.length > 0 ? accounts[0].currency : 'USD';
+  const defaultCurrency = accounts && accounts.length > 0 ? accounts[0].currency : 'INR';
 
   const submitUpdate = () => {
     if (!selectedGoalForUpdate || !updateAmount) return;

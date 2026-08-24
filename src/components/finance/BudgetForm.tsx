@@ -26,7 +26,7 @@ export function BudgetForm({ onSuccess, initialData }: BudgetFormProps) {
   const { mutateAsync: deleteBudgetMutation } = useDeleteBudget();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const defaultCurrency = accounts && accounts.length > 0 ? accounts[0].currency : 'USD';
+  const defaultCurrency = accounts && accounts.length > 0 ? accounts[0].currency : 'INR';
 
   const {
     register,

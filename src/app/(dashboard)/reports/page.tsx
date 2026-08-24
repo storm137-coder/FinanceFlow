@@ -17,7 +17,7 @@ export default function ReportsPage() {
   const [dateRange, setDateRange] = useState('30days');
   const [reportType, setReportType] = useState('transactions');
 
-  const defaultCurrency = accounts?.[0]?.currency || 'USD';
+  const defaultCurrency = accounts?.[0]?.currency || 'INR';
 
   // Filter transactions based on date range
   const filteredTransactions = useMemo(() => {

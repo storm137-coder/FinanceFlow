@@ -30,7 +30,7 @@ const INVESTMENT_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
-export function InvestmentForm({ onSuccess, initialData, defaultCurrency = 'USD' }: InvestmentFormProps) {
+export function InvestmentForm({ onSuccess, initialData, defaultCurrency = 'INR' }: InvestmentFormProps) {
   const { mutateAsync: addInvestment } = useAddInvestment();
   const { mutateAsync: updateInvestment } = useUpdateInvestment();
   const { mutateAsync: deleteInvestment } = useDeleteInvestment();

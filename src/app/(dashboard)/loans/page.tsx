@@ -18,7 +18,7 @@ export default function LoansPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<any>(null);
   
-  const defaultCurrency = accounts?.[0]?.currency || 'USD';
+  const defaultCurrency = accounts?.[0]?.currency || 'INR';
 
   const handleMarkPayment = async (loan: any, scheduleSummary: any) => {
     if (!scheduleSummary) return;

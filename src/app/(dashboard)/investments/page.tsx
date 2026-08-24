@@ -31,7 +31,7 @@ export default function InvestmentsPage() {
     Investment | undefined
   >(undefined);
 
-  const defaultCurrency = accounts?.[0]?.currency || "USD";
+  const defaultCurrency = accounts?.[0]?.currency || "INR";
 
   // Calculate Portfolio Totals
   const totalInvested =

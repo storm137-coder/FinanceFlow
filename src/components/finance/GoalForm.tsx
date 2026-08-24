@@ -25,7 +25,7 @@ export function GoalForm({ onSuccess, initialData }: GoalFormProps) {
   const { mutateAsync: deleteGoalMutation } = useDeleteGoal();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const defaultCurrency = accounts && accounts.length > 0 ? accounts[0].currency : 'USD';
+  const defaultCurrency = accounts && accounts.length > 0 ? accounts[0].currency : 'INR';
 
   const {
     register,

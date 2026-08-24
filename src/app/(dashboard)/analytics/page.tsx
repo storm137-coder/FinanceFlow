@@ -132,10 +132,10 @@ export default function AnalyticsPage() {
 
       {/* Charts Grid */}
       <div className="space-y-6">
-        <OverviewCharts transactions={filteredTransactions} currency={user?.currency || 'USD'} />
+        <OverviewCharts transactions={filteredTransactions} currency={user?.currency || 'INR'} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CategoryCharts transactions={filteredTransactions} currency={user?.currency || 'USD'} />
-          <TrendCharts transactions={transactions} currency={user?.currency || 'USD'} />
+          <CategoryCharts transactions={filteredTransactions} currency={user?.currency || 'INR'} />
+          <TrendCharts transactions={transactions} currency={user?.currency || 'INR'} />
         </div>
       </div>
     </div>

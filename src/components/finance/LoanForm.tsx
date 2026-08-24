@@ -18,7 +18,7 @@ interface LoanFormProps {
   defaultCurrency?: string;
 }
 
-export function LoanForm({ onSuccess, initialData, defaultCurrency = 'USD' }: LoanFormProps) {
+export function LoanForm({ onSuccess, initialData, defaultCurrency = 'INR' }: LoanFormProps) {
   const { mutateAsync: addLoan } = useAddLoan();
   const { mutateAsync: updateLoan } = useUpdateLoan();
   const { mutateAsync: deleteLoan } = useDeleteLoan();

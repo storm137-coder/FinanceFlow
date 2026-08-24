@@ -33,7 +33,7 @@ export default function RegisterPage() {
       email: '',
       password: '',
       confirmPassword: '',
-      currency: 'USD',
+      currency: 'INR',
     },
   });
 

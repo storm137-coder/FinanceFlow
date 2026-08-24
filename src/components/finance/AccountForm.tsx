@@ -28,7 +28,7 @@ export function AccountForm({ onSuccess, initialData }: { onSuccess?: () => void
     } : {
       name: '',
       type: 'checking',
-      currency: 'USD',
+      currency: 'INR',
       initialBalance: 0,
     }
   });
@@ -114,7 +114,7 @@ export function AccountForm({ onSuccess, initialData }: { onSuccess?: () => void
 
         <div className="space-y-2">
           <Label htmlFor="currency">Currency</Label>
-          <Input id="currency" {...register('currency')} placeholder="USD" />
+          <Input id="currency" {...register('currency')} placeholder="INR" />
           {errors.currency && <p className="text-sm text-destructive">{errors.currency.message}</p>}
         </div>
       </div>

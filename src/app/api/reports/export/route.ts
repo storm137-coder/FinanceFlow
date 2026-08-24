@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch user profile for default currency
     const userDoc = await adminDb.collection('users').doc(uid).get();
-    const defaultCurrency = userDoc.data()?.currency || 'USD';
+    const defaultCurrency = userDoc.data()?.currency || 'INR';
 
     // Fetch transactions
     const txSnapshot = await adminDb.collection('users').doc(uid).collection('transactions').get();

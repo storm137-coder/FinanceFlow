@@ -19,7 +19,7 @@ interface WishlistFormProps {
   defaultCurrency?: string;
 }
 
-export function WishlistForm({ onSuccess, initialData, defaultCurrency = 'USD' }: WishlistFormProps) {
+export function WishlistForm({ onSuccess, initialData, defaultCurrency = 'INR' }: WishlistFormProps) {
   const { mutateAsync: addItem } = useAddWishlist();
   const { mutateAsync: updateItem } = useUpdateWishlist();
   const { mutateAsync: deleteItem } = useDeleteWishlist();

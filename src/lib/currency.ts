@@ -1,4 +1,4 @@
-export function toMinorUnits(amount: number, currencyCode: string = 'USD'): number {
+export function toMinorUnits(amount: number, currencyCode: string = 'INR'): number {
   // Most currencies have 2 decimals (e.g. USD, EUR, INR)
   // JPY has 0 decimals
   // BHD, KWD, OMR have 3 decimals
@@ -6,12 +6,12 @@ export function toMinorUnits(amount: number, currencyCode: string = 'USD'): numb
   return Math.round(amount * Math.pow(10, fractionDigits));
 }
 
-export function fromMinorUnits(minorUnits: number, currencyCode: string = 'USD'): number {
+export function fromMinorUnits(minorUnits: number, currencyCode: string = 'INR'): number {
   const fractionDigits = getFractionDigits(currencyCode);
   return minorUnits / Math.pow(10, fractionDigits);
 }
 
-export function formatCurrency(minorUnits: number, currencyCode: string = 'USD', locale: string = 'en-US'): string {
+export function formatCurrency(minorUnits: number, currencyCode: string = 'INR', locale: string = 'en-US'): string {
   const fractionDigits = getFractionDigits(currencyCode);
   const amount = minorUnits / Math.pow(10, fractionDigits);
   

@@ -5,6 +5,7 @@ import { AccountForm } from '@/components/finance/AccountForm';
 import { SummaryCards } from '@/components/finance/SummaryCards';
 import { CategorySpendChart } from '@/components/finance/CategorySpendChart';
 import { RecentTransactionsWidget } from '@/components/finance/RecentTransactionsWidget';
+import { StaleAmountNotification } from '@/components/finance/StaleAmountNotification';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PlusCircle } from 'lucide-react';
@@ -39,19 +40,24 @@ export default function DashboardPage() {
         </Dialog>
       </div>
 
-      {/* Top Metrics Row */}
+      {/* Notifications */}
       <section className="animate-in-d1">
+        <StaleAmountNotification />
+      </section>
+
+      {/* Top Metrics Row */}
+      <section className="animate-in-d2">
         <SummaryCards />
       </section>
 
       {/* Analytics & Recents Row */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in-d2">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in-d3">
         <CategorySpendChart />
         <RecentTransactionsWidget />
       </section>
 
       {/* Bottom Row */}
-      <section className="animate-in-d3">
+      <section className="animate-in-d4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-h2 font-display">Your Accounts</h2>
         </div>

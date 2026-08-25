@@ -162,18 +162,22 @@ export function TransactionForm({ onSuccess, initialData }: TransactionFormProps
 
       <div className="space-y-2">
         <Label htmlFor="categoryId">Category</Label>
-        <Input 
-          id="categoryId" 
-          list="categories" 
-          placeholder="Select or type a category" 
-          {...register('categoryId')} 
-          disabled={isLoading} 
+        <Controller
+          control={control}
+          name="categoryId"
+          render={({ field }) => (
+            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+              <SelectTrigger id="categoryId">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         />
-        <datalist id="categories">
-          {CATEGORIES.map(cat => (
-            <option key={cat} value={cat} />
-          ))}
-        </datalist>
         {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
       </div>
 

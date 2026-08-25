@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAccounts } from '@/hooks/useAccounts';
 import { useInvestments } from '@/hooks/useInvestments';
 import { AlertCircle, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { differenceInDays } from 'date-fns';
 import { Account, Investment } from '@/types';
 

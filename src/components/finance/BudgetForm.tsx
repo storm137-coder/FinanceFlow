@@ -8,6 +8,7 @@ import { useAddBudget, useUpdateBudget, useDeleteBudget } from '@/hooks/useBudge
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CategoryInput } from '@/components/finance/CategoryInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toMinorUnits, fromMinorUnits } from '@/lib/currency';
 import { useAccounts } from '@/hooks/useAccounts';
@@ -110,20 +111,14 @@ export function BudgetForm({ onSuccess, initialData }: BudgetFormProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
-        <Select onValueChange={(val) => setValue('category', val)} defaultValue={initialData?.category}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a category" />
-          </SelectTrigger>
-          <SelectContent>
-            {CATEGORIES.map(cat => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
-      </div>
+      <CategoryInput
+        id="category"
+        label="Category"
+        placeholder="Select or type a category"
+        defaultCategories={CATEGORIES}
+        error={errors.category?.message as string}
+        {...register('category')}
+      />
 
       <div className="space-y-2">
         <Label htmlFor="amount">Monthly Budget Amount</Label>

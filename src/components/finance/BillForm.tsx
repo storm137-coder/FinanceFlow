@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { billSchema } from '@/validations/schemas';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { CategoryInput } from '@/components/finance/CategoryInput';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BILL_CATEGORIES } from '@/lib/constants';
@@ -113,22 +114,14 @@ export function BillForm({ initialData, onSuccess, onCancel }: BillFormProps) {
           <Input type="number" step="0.01" {...register('amount', { valueAsNumber: true })} />
           {errors.amount && <p className="text-danger text-sm">{errors.amount.message as string}</p>}
         </div>
-        <div className="space-y-2">
-          <label className="text-body font-medium">Category</label>
-          <Select value={category} onValueChange={(val) => setValue('category', val)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              {BILL_CATEGORIES.map(c => (
-                <SelectItem key={c.value} value={c.value}>
-                  <span className="mr-2">{c.icon}</span>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <CategoryInput
+          id="category"
+          label="Category"
+          placeholder="Select or type..."
+          defaultCategories={BILL_CATEGORIES.map(c => c.label)}
+          error={errors.category?.message as string}
+          {...register('category')}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">

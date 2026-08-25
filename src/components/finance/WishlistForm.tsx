@@ -8,6 +8,7 @@ import { useAddWishlist, useUpdateWishlist, useDeleteWishlist } from '@/hooks/us
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CategoryInput } from '@/components/finance/CategoryInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { WishlistItem } from '@/types';
@@ -130,6 +131,14 @@ export function WishlistForm({ onSuccess, initialData, defaultCurrency = 'INR' }
           />
         </div>
       </div>
+      <CategoryInput
+        id="category"
+        label="Category (Optional)"
+        placeholder="Select or type a category"
+        defaultCategories={['Gadgets', 'Home', 'Apparel', 'Books']}
+        error={errors.category?.message}
+        {...register('category')}
+      />
 
       <div className="space-y-2">
         <Label htmlFor="storeUrl">Store Link (Optional)</Label>

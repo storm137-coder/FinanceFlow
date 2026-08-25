@@ -8,6 +8,7 @@ import { useAddGoal, useUpdateGoal, useDeleteGoal } from '@/hooks/useGoals';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CategoryInput } from '@/components/finance/CategoryInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toMinorUnits, fromMinorUnits } from '@/lib/currency';
 import { useAccounts } from '@/hooks/useAccounts';
@@ -104,23 +105,14 @@ export function GoalForm({ onSuccess, initialData }: GoalFormProps) {
         {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
-        <Select onValueChange={(val) => setValue('category', val)} defaultValue={initialData?.category}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Savings">Savings</SelectItem>
-            <SelectItem value="Travel">Travel</SelectItem>
-            <SelectItem value="Home">Home</SelectItem>
-            <SelectItem value="Vehicle">Vehicle</SelectItem>
-            <SelectItem value="Emergency">Emergency</SelectItem>
-          </SelectContent>
-        </Select>
-        {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
-      </div>
-
+      <CategoryInput
+        id="category"
+        label="Category"
+        placeholder="Select or type a category"
+        defaultCategories={['Savings', 'Travel', 'Home', 'Vehicle', 'Emergency']}
+        error={errors.category?.message}
+        {...register('category')}
+      />
       <div className="space-y-2">
         <Label htmlFor="targetAmount">Target Amount</Label>
         <Input

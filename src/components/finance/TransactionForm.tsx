@@ -8,6 +8,7 @@ import { useAddTransaction, useUpdateTransaction, useDeleteTransaction, useTrans
 import { useAccounts } from '@/hooks/useAccounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CategoryInput } from '@/components/finance/CategoryInput';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { toMinorUnits, fromMinorUnits } from '@/lib/currency';
@@ -31,10 +32,7 @@ export function TransactionForm({ onSuccess, initialData }: TransactionFormProps
   const [isLoading, setIsLoading] = useState(false);
   const { data: transactionsData } = useTransactions();
 
-  const uniqueCategories = React.useMemo(() => {
-    const custom = new Set((transactionsData?.pages.flatMap(p => p.transactions) || []).map(t => t.categoryId));
-    return Array.from(new Set([...CATEGORIES, ...Array.from(custom)])).sort();
-  }, [transactionsData]);
+  // We now use CategoryInput for this
 
   const { register, handleSubmit, control, formState: { errors }, watch } = useForm({
     resolver: zodResolver(transactionSchema),
@@ -166,23 +164,15 @@ export function TransactionForm({ onSuccess, initialData }: TransactionFormProps
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="categoryId">Category</Label>
-        <Input 
-          id="categoryId" 
-          list="categories" 
-          placeholder="Select or type a category" 
-          {...register('categoryId')} 
-          disabled={isLoading} 
-          autoComplete="off"
-        />
-        <datalist id="categories">
-          {uniqueCategories.map(cat => (
-            <option key={cat} value={cat} />
-          ))}
-        </datalist>
-        {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
-      </div>
+      <CategoryInput
+        id="categoryId"
+        label="Category"
+        placeholder="Select or type a category"
+        disabled={isLoading}
+        defaultCategories={CATEGORIES}
+        error={errors.categoryId?.message as string}
+        {...register('categoryId')}
+      />
 
       <div className="space-y-2">
         <Label htmlFor="merchant">Merchant (Optional)</Label>

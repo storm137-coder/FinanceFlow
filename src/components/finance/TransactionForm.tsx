@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { transactionSchema, TransactionFormData } from '@/validations/schemas';
-import { useAddTransaction, useUpdateTransaction, useDeleteTransaction } from '@/hooks/useTransactions';
+import { useAddTransaction, useUpdateTransaction, useDeleteTransaction, useTransactions } from '@/hooks/useTransactions';
 import { useAccounts } from '@/hooks/useAccounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,12 @@ export function TransactionForm({ onSuccess, initialData }: TransactionFormProps
   const { mutateAsync: updateTransaction } = useUpdateTransaction();
   const { mutateAsync: deleteTransaction } = useDeleteTransaction();
   const [isLoading, setIsLoading] = useState(false);
+  const { data: transactionsData } = useTransactions();
+
+  const uniqueCategories = React.useMemo(() => {
+    const custom = new Set((transactionsData?.pages.flatMap(p => p.transactions) || []).map(t => t.categoryId));
+    return Array.from(new Set([...CATEGORIES, ...Array.from(custom)])).sort();
+  }, [transactionsData]);
 
   const { register, handleSubmit, control, formState: { errors }, watch } = useForm({
     resolver: zodResolver(transactionSchema),
@@ -162,22 +168,19 @@ export function TransactionForm({ onSuccess, initialData }: TransactionFormProps
 
       <div className="space-y-2">
         <Label htmlFor="categoryId">Category</Label>
-        <Controller
-          control={control}
-          name="categoryId"
-          render={({ field }) => (
-            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
-              <SelectTrigger id="categoryId">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+        <Input 
+          id="categoryId" 
+          list="categories" 
+          placeholder="Select or type a category" 
+          {...register('categoryId')} 
+          disabled={isLoading} 
+          autoComplete="off"
         />
+        <datalist id="categories">
+          {uniqueCategories.map(cat => (
+            <option key={cat} value={cat} />
+          ))}
+        </datalist>
         {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
       </div>
 

@@ -289,6 +289,41 @@ export function getCurrentMonthYear(): { month: number; year: number } {
   };
 }
 
+/**
+ * Accurately extracts year, month (0-indexed: 0=Jan, 11=Dec), and day from any date input.
+ * Prioritizes parsing YYYY-MM-DD directly without timezone offsets.
+ */
+export function getTransactionDateComponents(dateVal: unknown): { year: number; month: number; day: number } | null {
+  if (!dateVal) return null;
+  if (typeof dateVal === 'string') {
+    const ymdMatch = dateVal.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (ymdMatch) {
+      return {
+        year: parseInt(ymdMatch[1], 10),
+        month: parseInt(ymdMatch[2], 10) - 1, // 0-indexed
+        day: parseInt(ymdMatch[3], 10),
+      };
+    }
+  }
+  const d = safeParseDate(dateVal);
+  if (!d) return null;
+  return {
+    year: d.getFullYear(),
+    month: d.getMonth(),
+    day: d.getDate(),
+  };
+}
+
+/**
+ * Formats a budget period (month 0-11, full year) into a human readable string like 'Sep 2026' or 'September 2026'.
+ */
+export function formatBudgetPeriod(month?: number, year?: number, formatType: 'short' | 'long' = 'short'): string {
+  const now = new Date();
+  const m = typeof month === 'number' ? month : now.getMonth();
+  const y = typeof year === 'number' ? year : now.getFullYear();
+  return `${new Date(y, m).toLocaleString('en-US', { month: formatType })} ${y}`;
+}
+
 /* -------------------------------------------------------------------------- */
 /*                            TEXT HELPERS                                     */
 /* -------------------------------------------------------------------------- */

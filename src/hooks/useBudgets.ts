@@ -3,13 +3,16 @@ import { collection, doc, onSnapshot, query, setDoc, updateDoc, deleteDoc, serve
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Budget } from '@/types';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useAllTransactions } from './useTransactions';
+import { getTransactionDateComponents } from '@/lib/utils';
 
 export const BUDGETS_QUERY_KEY = ['budgets'];
 
 export function useBudgets() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { data: allTransactions = [] } = useAllTransactions();
 
   const queryResult = useQuery({
     queryKey: BUDGETS_QUERY_KEY,
@@ -41,11 +44,49 @@ export function useBudgets() {
     return () => unsubscribe();
   }, [user, queryClient]);
 
-  return queryResult;
+  // Compute spentMinorUnits dynamically from allTransactions for each budget
+  const budgetsWithSpent = useMemo(() => {
+    if (!queryResult.data) return undefined;
+
+    return queryResult.data.map((budget) => {
+      const budgetCat = (budget.category || '').trim().toLowerCase();
+      const targetYear = typeof budget.year === 'number' ? budget.year : new Date().getFullYear();
+      const targetMonth = typeof budget.month === 'number' ? budget.month : new Date().getMonth();
+
+      let spent = 0;
+      allTransactions.forEach((tx) => {
+        if (tx.type !== 'expense') return;
+
+        const txCat = (tx.categoryId || '').trim().toLowerCase();
+        if (txCat !== budgetCat) return;
+
+        const dateComp = getTransactionDateComponents(tx.date);
+        if (!dateComp) return;
+
+        if (dateComp.year === targetYear && dateComp.month === targetMonth) {
+          const amount = tx.amountMinorUnits !== undefined 
+            ? tx.amountMinorUnits 
+            : Math.round(((tx as any).amount || 0) * 100);
+          spent += amount;
+        }
+      });
+
+      return {
+        ...budget,
+        spentMinorUnits: spent,
+      };
+    });
+  }, [queryResult.data, allTransactions]);
+
+  return {
+    ...queryResult,
+    data: budgetsWithSpent,
+  };
 }
 
 export function useAddBudget() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (budgetData: Omit<Budget, 'id' | 'createdAt' | 'updatedAt' | 'spentMinorUnits' | 'uid'>) => {
@@ -65,11 +106,15 @@ export function useAddBudget() {
       await setDoc(newBudgetRef, budgetPayload);
       return newBudgetRef.id;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BUDGETS_QUERY_KEY });
+    },
   });
 }
 
 export function useDeleteBudget() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -78,15 +123,24 @@ export function useDeleteBudget() {
       const budgetRef = doc(db, 'users', user.uid, 'budgets', id);
       await deleteDoc(budgetRef);
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BUDGETS_QUERY_KEY });
+    },
   });
 }
+
 export function useUpdateBudget() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ id, ...data }: any) => {
       if (!user) throw new Error('Not logged in');
       const ref = doc(db, 'users', user.uid, 'budgets', id);
       await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BUDGETS_QUERY_KEY });
+    },
   });
 }

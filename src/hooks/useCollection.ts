@@ -48,7 +48,7 @@ export function useCollection<T extends { id: string }>(
 
     setLoading(true);
     try {
-      let q = query(collection(db, 'users', user.uid, collectionName), where('uid', '==', user.uid));
+      let q = query(collection(db, 'users', user.uid, collectionName));
       
       const parsedOptions = optionsString ? JSON.parse(optionsString) as UseCollectionOptions : undefined;
 

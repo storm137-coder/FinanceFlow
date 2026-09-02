@@ -1,10 +1,51 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { collection, doc, query, where, orderBy, limit, startAfter, getDocs, runTransaction, serverTimestamp, QueryDocumentSnapshot, deleteDoc } from 'firebase/firestore';
+import { collection, doc, query, where, orderBy, limit, startAfter, getDocs, runTransaction, serverTimestamp, QueryDocumentSnapshot, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Transaction, Account } from '@/types';
+import { useEffect } from 'react';
 
 export const TRANSACTIONS_QUERY_KEY = ['transactions'];
+export const ALL_TRANSACTIONS_QUERY_KEY = ['all-transactions'];
+
+export function useAllTransactions() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const queryResult = useQuery({
+    queryKey: ALL_TRANSACTIONS_QUERY_KEY,
+    queryFn: () => new Promise<Transaction[]>(() => {}),
+    enabled: !!user,
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      collection(db, 'users', user.uid, 'transactions'),
+      orderBy('date', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const transactions: Transaction[] = [];
+        snapshot.forEach((doc) => {
+          transactions.push({ id: doc.id, ...doc.data() } as Transaction);
+        });
+        queryClient.setQueryData(ALL_TRANSACTIONS_QUERY_KEY, transactions);
+      },
+      (error) => {
+        console.error('Error fetching all transactions:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user, queryClient]);
+
+  return queryResult;
+}
 
 export function useTransactions(accountId?: string, categoryId?: string) {
   const { user } = useAuth();
@@ -85,6 +126,7 @@ export function useAddTransaction() {
 
         transaction.set(txRef, {
           ...cleanTransactionData,
+          uid: user.uid,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
@@ -93,9 +135,11 @@ export function useAddTransaction() {
       return txRef.id;
     },
     onSuccess: () => {
-      // Invalidate both transactions and accounts since balances changed
+      // Invalidate transactions, all-transactions, accounts, and budgets
       queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ALL_TRANSACTIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
     },
   });
 }
@@ -126,7 +170,9 @@ export function useUpdateTransaction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ALL_TRANSACTIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
     },
   });
 }
@@ -144,7 +190,9 @@ export function useDeleteTransaction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ALL_TRANSACTIONS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
     },
   });
 }

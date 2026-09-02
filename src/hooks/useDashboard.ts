@@ -1,16 +1,12 @@
 import { useMemo } from 'react';
 import { useAccounts } from './useAccounts';
-import { useTransactions } from './useTransactions';
-import { startOfMonth, isAfter } from 'date-fns';
+import { useAllTransactions } from './useTransactions';
+import { getTransactionDateComponents } from '@/lib/utils';
 import { Transaction } from '@/types';
 
 export function useDashboard() {
   const { data: accounts, isLoading: accountsLoading } = useAccounts();
-  const { data: transactionsData, isLoading: transactionsLoading } = useTransactions();
-
-  const transactions = useMemo(() => {
-    return transactionsData?.pages.flatMap(page => page.transactions) || [];
-  }, [transactionsData]);
+  const { data: transactions = [], isLoading: transactionsLoading } = useAllTransactions();
 
   const stats = useMemo(() => {
     let totalBalanceMinorUnits = 0;
@@ -22,15 +18,19 @@ export function useDashboard() {
       totalBalanceMinorUnits = accounts.reduce((acc, account) => acc + account.balanceMinorUnits, 0);
     }
 
-    const monthStart = startOfMonth(new Date());
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-indexed (0=Jan, 11=Dec)
     
     let monthlyIncomeMinorUnits = 0;
     let monthlyExpenseMinorUnits = 0;
     const categorySpend: Record<string, number> = {};
 
     transactions.forEach((tx: Transaction) => {
-      const txDate = new Date(tx.date);
-      if (isAfter(txDate, monthStart)) {
+      const dateComp = getTransactionDateComponents(tx.date);
+      if (!dateComp) return;
+
+      if (dateComp.year === currentYear && dateComp.month === currentMonth) {
         const amount = tx.amountMinorUnits !== undefined 
           ? tx.amountMinorUnits 
           : Math.round(((tx as any).amount || 0) * 100);
@@ -40,11 +40,12 @@ export function useDashboard() {
         } else if (tx.type === 'expense') {
           monthlyExpenseMinorUnits += amount;
           
-          // Aggregate for pie chart
-          if (!categorySpend[tx.categoryId]) {
-            categorySpend[tx.categoryId] = 0;
+          // Aggregate for pie chart with trimmed category name
+          const catName = (tx.categoryId || 'Uncategorized').trim();
+          if (!categorySpend[catName]) {
+            categorySpend[catName] = 0;
           }
-          categorySpend[tx.categoryId] += amount;
+          categorySpend[catName] += amount;
         }
       }
     });

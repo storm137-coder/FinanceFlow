@@ -7,6 +7,7 @@ import {
   parseISO,
   differenceInDays,
 } from 'date-fns';
+import type { Budget, Transaction } from '@/types';
 
 /* -------------------------------------------------------------------------- */
 /*                              CLASS NAMES                                   */
@@ -322,6 +323,132 @@ export function formatBudgetPeriod(month?: number, year?: number, formatType: 's
   const m = typeof month === 'number' ? month : now.getMonth();
   const y = typeof year === 'number' ? year : now.getFullYear();
   return `${new Date(y, m).toLocaleString('en-US', { month: formatType })} ${y}`;
+}
+
+/**
+ * Resolves active budgets and calculates dynamic spending for a given period ('all' or 'YYYY-M').
+ * Supports recurring monthly budgets where a budget set for a category carries forward into future months.
+ */
+export function calculateBudgetsForPeriod(
+  rawBudgets: Budget[] = [],
+  transactions: Transaction[] = [],
+  period: string = 'current'
+): Budget[] {
+  if (!rawBudgets || rawBudgets.length === 0) return [];
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const effectivePeriod = (!period || period === 'current') 
+    ? `${currentYear}-${currentMonth}` 
+    : period;
+
+  // Handle 'all' periods: calculate all-time spent for each budget document
+  if (effectivePeriod === 'all') {
+    return rawBudgets.map((budget) => {
+      const budgetCat = (budget.category || '').trim().toLowerCase();
+      let totalSpent = 0;
+
+      transactions.forEach((tx) => {
+        if (tx.type !== 'expense') return;
+        const txCat = (tx.categoryId || '').trim().toLowerCase();
+        if (txCat !== budgetCat) return;
+
+        const amount = tx.amountMinorUnits !== undefined
+          ? tx.amountMinorUnits
+          : Math.round(((tx as any).amount || 0) * 100);
+        totalSpent += amount;
+      });
+
+      return {
+        ...budget,
+        spentMinorUnits: totalSpent,
+      };
+    });
+  }
+
+  // Handle specific month: 'YYYY-M'
+  const [pYearStr, pMonthStr] = effectivePeriod.split('-');
+  const targetYear = parseInt(pYearStr, 10);
+  const targetMonth = parseInt(pMonthStr, 10);
+  const targetIndex = targetYear * 12 + targetMonth;
+
+  // Group raw budgets by normalized category
+  const categoryBudgetsMap = new Map<string, Budget[]>();
+  rawBudgets.forEach((b) => {
+    const cat = (b.category || '').trim().toLowerCase();
+    if (!categoryBudgetsMap.has(cat)) {
+      categoryBudgetsMap.set(cat, []);
+    }
+    categoryBudgetsMap.get(cat)!.push(b);
+  });
+
+  const resolvedBudgets: Budget[] = [];
+
+  categoryBudgetsMap.forEach((list, cat) => {
+    // 1. Check for exact year and month match
+    let activeBudget = list.find((b) => b.year === targetYear && b.month === targetMonth);
+
+    // 2. If no exact match, find the most recent budget defined at or before target period (recurring forward)
+    if (!activeBudget) {
+      const pastBudgets = list
+        .filter((b) => {
+          const y = typeof b.year === 'number' ? b.year : currentYear;
+          const m = typeof b.month === 'number' ? b.month : currentMonth;
+          return (y * 12 + m) <= targetIndex;
+        })
+        .sort((a, b) => {
+          const yA = typeof a.year === 'number' ? a.year : currentYear;
+          const mA = typeof a.month === 'number' ? a.month : currentMonth;
+          const yB = typeof b.year === 'number' ? b.year : currentYear;
+          const mB = typeof b.month === 'number' ? b.month : currentMonth;
+          return (yB * 12 + mB) - (yA * 12 + mA);
+        });
+
+      if (pastBudgets.length > 0) {
+        activeBudget = pastBudgets[0];
+      }
+    }
+
+    // 3. If all budgets were defined in the future, fallback to the earliest one
+    if (!activeBudget) {
+      const sorted = [...list].sort((a, b) => {
+        const yA = typeof a.year === 'number' ? a.year : currentYear;
+        const mA = typeof a.month === 'number' ? a.month : currentMonth;
+        const yB = typeof b.year === 'number' ? b.year : currentYear;
+        const mB = typeof b.month === 'number' ? b.month : currentMonth;
+        return (yA * 12 + mA) - (yB * 12 + mB);
+      });
+      activeBudget = sorted[0];
+    }
+
+    // Calculate spent in this target month and year
+    let spent = 0;
+    transactions.forEach((tx) => {
+      if (tx.type !== 'expense') return;
+      const txCat = (tx.categoryId || '').trim().toLowerCase();
+      if (txCat !== cat) return;
+
+      const dateComp = getTransactionDateComponents(tx.date);
+      if (!dateComp) return;
+
+      if (dateComp.year === targetYear && dateComp.month === targetMonth) {
+        const amount = tx.amountMinorUnits !== undefined
+          ? tx.amountMinorUnits
+          : Math.round(((tx as any).amount || 0) * 100);
+        spent += amount;
+      }
+    });
+
+    resolvedBudgets.push({
+      ...activeBudget,
+      month: targetMonth,
+      year: targetYear,
+      spentMinorUnits: spent,
+    });
+  });
+
+  return resolvedBudgets;
 }
 
 /* -------------------------------------------------------------------------- */

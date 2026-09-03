@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getTransactionDateComponents, formatBudgetPeriod } from '../utils';
+import { getTransactionDateComponents, formatBudgetPeriod, calculateBudgetsForPeriod } from '../utils';
 
 describe('getTransactionDateComponents', () => {
   it('correctly extracts year, month (0-indexed), and day from YYYY-MM-DD string without timezone drift', () => {
@@ -136,5 +136,130 @@ describe('Budget spent calculation logic', () => {
     });
 
     expect(travelSpend).toBe(0);
+  });
+});
+
+describe('calculateBudgetsForPeriod with recurring monthly budgets', () => {
+  // Exactly modeling the user scenario:
+  // Budget created in August 2026 for category 'gugaagag' with limit ₹134,545.00 (13454500 minor units)
+  const rawBudgets = [
+    {
+      id: 'budget-gugaagag',
+      uid: 'user1',
+      category: 'gugaagag',
+      amountMinorUnits: 13454500,
+      spentMinorUnits: 0,
+      month: 7, // August 2026
+      year: 2026,
+      createdAt: '2026-08-25T10:00:00Z',
+      updatedAt: '2026-08-25T10:00:00Z',
+    },
+  ];
+
+  const transactions = [
+    {
+      id: 'tx-1',
+      accountId: 'acc1',
+      type: 'expense' as const,
+      categoryId: 'gugaagag',
+      amountMinorUnits: 8888800, // ₹88,888.00
+      currency: 'INR',
+      date: '2026-09-03',
+      createdAt: '2026-09-03T10:00:00Z',
+      updatedAt: '2026-09-03T10:00:00Z',
+    },
+    {
+      id: 'tx-2',
+      accountId: 'acc1',
+      type: 'expense' as const,
+      categoryId: 'gugaagag',
+      amountMinorUnits: 9900, // ₹99.00
+      currency: 'INR',
+      date: '2026-09-03',
+      createdAt: '2026-09-03T11:00:00Z',
+      updatedAt: '2026-09-03T11:00:00Z',
+    },
+    {
+      id: 'tx-3',
+      accountId: 'acc1',
+      type: 'expense' as const,
+      categoryId: 'gugaagag',
+      amountMinorUnits: 50000, // ₹500.00
+      currency: 'INR',
+      date: '2026-08-25',
+      createdAt: '2026-08-25T10:00:00Z',
+      updatedAt: '2026-08-25T10:00:00Z',
+    },
+    {
+      id: 'tx-4',
+      accountId: 'acc1',
+      type: 'expense' as const,
+      categoryId: 'gugaagag',
+      amountMinorUnits: 5400, // ₹54.00
+      currency: 'INR',
+      date: '2026-08-25',
+      createdAt: '2026-08-25T11:00:00Z',
+      updatedAt: '2026-08-25T11:00:00Z',
+    },
+  ];
+
+  it('correctly aggregates September 2026 transactions for August-created recurring budget', () => {
+    // Calling for September 2026 ('2026-8')
+    const result = calculateBudgetsForPeriod(rawBudgets, transactions, '2026-8');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].category).toBe('gugaagag');
+    expect(result[0].amountMinorUnits).toBe(13454500); // ₹134,545.00
+    // Sep 3 transactions: 88,888.00 + 99.00 = 88,987.00 (8898700 minor units)
+    expect(result[0].spentMinorUnits).toBe(8898700);
+    expect(result[0].month).toBe(8);
+    expect(result[0].year).toBe(2026);
+  });
+
+  it('correctly isolates August 2026 transactions when viewing August 2026', () => {
+    // Calling for August 2026 ('2026-7')
+    const result = calculateBudgetsForPeriod(rawBudgets, transactions, '2026-7');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].category).toBe('gugaagag');
+    // Aug 25 transactions: 500.00 + 54.00 = 554.00 (55400 minor units)
+    expect(result[0].spentMinorUnits).toBe(55400);
+    expect(result[0].month).toBe(7);
+    expect(result[0].year).toBe(2026);
+  });
+
+  it('correctly calculates all-time total spend when viewing all periods', () => {
+    // Calling for All Periods ('all')
+    const result = calculateBudgetsForPeriod(rawBudgets, transactions, 'all');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].category).toBe('gugaagag');
+    // All 4 transactions: 88,888 + 99 + 500 + 54 = 89,541.00 (8954100 minor units)
+    expect(result[0].spentMinorUnits).toBe(8954100);
+  });
+
+  it('respects month-specific budget override when defined', () => {
+    const rawBudgetsWithOverride = [
+      ...rawBudgets,
+      {
+        id: 'budget-gugaagag-sep',
+        uid: 'user1',
+        category: 'gugaagag',
+        amountMinorUnits: 20000000, // ₹200,000.00 specifically for September
+        spentMinorUnits: 0,
+        month: 8, // September 2026
+        year: 2026,
+        createdAt: '2026-09-01T10:00:00Z',
+        updatedAt: '2026-09-01T10:00:00Z',
+      },
+    ];
+
+    const resultSep = calculateBudgetsForPeriod(rawBudgetsWithOverride, transactions, '2026-8');
+    expect(resultSep[0].amountMinorUnits).toBe(20000000);
+    expect(resultSep[0].spentMinorUnits).toBe(8898700);
+
+    const resultAug = calculateBudgetsForPeriod(rawBudgetsWithOverride, transactions, '2026-7');
+    expect(resultAug[0].amountMinorUnits).toBe(13454500);
+    expect(resultAug[0].spentMinorUnits).toBe(55400);
   });
 });

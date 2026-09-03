@@ -5,11 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Budget } from '@/types';
 import { useEffect, useMemo } from 'react';
 import { useAllTransactions } from './useTransactions';
-import { getTransactionDateComponents } from '@/lib/utils';
+import { getTransactionDateComponents, calculateBudgetsForPeriod } from '@/lib/utils';
 
 export const BUDGETS_QUERY_KEY = ['budgets'];
 
-export function useBudgets() {
+export function useBudgets(selectedPeriod?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: allTransactions = [] } = useAllTransactions();
@@ -44,43 +44,16 @@ export function useBudgets() {
     return () => unsubscribe();
   }, [user, queryClient]);
 
-  // Compute spentMinorUnits dynamically from allTransactions for each budget
+  // Compute spentMinorUnits dynamically from allTransactions for each budget supporting recurring budgets
   const budgetsWithSpent = useMemo(() => {
     if (!queryResult.data) return undefined;
-
-    return queryResult.data.map((budget) => {
-      const budgetCat = (budget.category || '').trim().toLowerCase();
-      const targetYear = typeof budget.year === 'number' ? budget.year : new Date().getFullYear();
-      const targetMonth = typeof budget.month === 'number' ? budget.month : new Date().getMonth();
-
-      let spent = 0;
-      allTransactions.forEach((tx) => {
-        if (tx.type !== 'expense') return;
-
-        const txCat = (tx.categoryId || '').trim().toLowerCase();
-        if (txCat !== budgetCat) return;
-
-        const dateComp = getTransactionDateComponents(tx.date);
-        if (!dateComp) return;
-
-        if (dateComp.year === targetYear && dateComp.month === targetMonth) {
-          const amount = tx.amountMinorUnits !== undefined 
-            ? tx.amountMinorUnits 
-            : Math.round(((tx as any).amount || 0) * 100);
-          spent += amount;
-        }
-      });
-
-      return {
-        ...budget,
-        spentMinorUnits: spent,
-      };
-    });
-  }, [queryResult.data, allTransactions]);
+    return calculateBudgetsForPeriod(queryResult.data, allTransactions, selectedPeriod);
+  }, [queryResult.data, allTransactions, selectedPeriod]);
 
   return {
     ...queryResult,
     data: budgetsWithSpent,
+    rawBudgets: queryResult.data,
   };
 }
 

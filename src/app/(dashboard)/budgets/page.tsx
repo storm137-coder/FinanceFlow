@@ -2,64 +2,83 @@
 
 import { useBudgets } from '@/hooks/useBudgets';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useAllTransactions } from '@/hooks/useTransactions';
 import { BudgetForm } from '@/components/finance/BudgetForm';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency } from '@/lib/currency';
-import { formatBudgetPeriod } from '@/lib/utils';
+import { formatBudgetPeriod, getTransactionDateComponents } from '@/lib/utils';
 import { PlusCircle, Target, Edit2, Filter } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
 export default function BudgetsPage() {
-  const { data: budgets, isLoading } = useBudgets();
-  const { displayCurrency } = useDashboard();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<any>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('all');
-
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
+  const currentPeriodKey = `${currentYear}-${currentMonth}`;
 
-  // Distinct available periods from existing budgets
+  const [selectedPeriod, setSelectedPeriod] = useState<string>(currentPeriodKey);
+  const { data: budgets, rawBudgets, isLoading } = useBudgets(selectedPeriod);
+  const { data: allTransactions = [] } = useAllTransactions();
+  const { displayCurrency } = useDashboard();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<any>(null);
+
+  // Distinct available periods from current month, existing budgets, and transactions
   const availablePeriods = useMemo(() => {
-    if (!budgets || budgets.length === 0) return [];
     const periodMap = new Map<string, { year: number; month: number; label: string }>();
 
-    budgets.forEach((b) => {
+    // Always include current month
+    periodMap.set(currentPeriodKey, {
+      year: currentYear,
+      month: currentMonth,
+      label: `Current Month (${formatBudgetPeriod(currentMonth, currentYear, 'short')})`,
+    });
+
+    // Add periods from existing budgets
+    rawBudgets?.forEach((b) => {
       const y = typeof b.year === 'number' ? b.year : currentYear;
       const m = typeof b.month === 'number' ? b.month : currentMonth;
       const key = `${y}-${m}`;
       if (!periodMap.has(key)) {
-        const isCurrent = y === currentYear && m === currentMonth;
         periodMap.set(key, {
           year: y,
           month: m,
-          label: isCurrent 
-            ? `Current Month (${formatBudgetPeriod(m, y, 'short')})` 
-            : formatBudgetPeriod(m, y, 'long'),
+          label: formatBudgetPeriod(m, y, 'long'),
         });
       }
     });
 
-    return Array.from(periodMap.entries()).map(([key, val]) => ({
-      key,
-      ...val,
-    }));
-  }, [budgets, currentYear, currentMonth]);
-
-  // Filter budgets based on chosen period
-  const filteredBudgets = useMemo(() => {
-    if (!budgets) return [];
-    if (selectedPeriod === 'all') return budgets;
-
-    return budgets.filter((b) => {
-      const y = typeof b.year === 'number' ? b.year : currentYear;
-      const m = typeof b.month === 'number' ? b.month : currentMonth;
-      return `${y}-${m}` === selectedPeriod;
+    // Add periods from all transactions
+    allTransactions?.forEach((tx) => {
+      const dateComp = getTransactionDateComponents(tx.date);
+      if (dateComp) {
+        const key = `${dateComp.year}-${dateComp.month}`;
+        if (!periodMap.has(key)) {
+          periodMap.set(key, {
+            year: dateComp.year,
+            month: dateComp.month,
+            label: formatBudgetPeriod(dateComp.month, dateComp.year, 'long'),
+          });
+        }
+      }
     });
-  }, [budgets, selectedPeriod, currentYear, currentMonth]);
+
+    return Array.from(periodMap.entries())
+      .sort((a, b) => {
+        const [yA, mA] = a[0].split('-').map(Number);
+        const [yB, mB] = b[0].split('-').map(Number);
+        if (yA !== yB) return yB - yA;
+        return mB - mA;
+      })
+      .map(([key, val]) => ({
+        key,
+        ...val,
+      }));
+  }, [rawBudgets, allTransactions, currentYear, currentMonth, currentPeriodKey]);
+
+  const filteredBudgets = budgets || [];
 
   // Compute summary metrics for filtered budgets
   const { totalBudgeted, totalSpent, totalRemaining } = useMemo(() => {
@@ -85,12 +104,12 @@ export default function BudgetsPage() {
           <p className="text-muted-foreground mt-1">Manage your monthly spending limits.</p>
         </div>
         <div className="flex items-center gap-3">
-          {availablePeriods.length > 1 && (
+          {availablePeriods.length > 0 && (
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Periods" />
+                <SelectTrigger className="w-[190px]">
+                  <SelectValue placeholder="Select Period" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Periods</SelectItem>
@@ -183,7 +202,7 @@ export default function BudgetsPage() {
       ) : filteredBudgets.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 bg-card border border-border rounded-lg text-center shadow-sm">
           <p className="text-muted-foreground mb-4">No budgets found for the selected period.</p>
-          <Button variant="outline" onClick={() => setSelectedPeriod('all')}>View All Budgets</Button>
+          <Button variant="outline" onClick={() => setSelectedPeriod(currentPeriodKey)}>View Current Month</Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -206,7 +225,7 @@ export default function BudgetsPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-lg">{budget.category}</h3>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-muted-foreground font-medium">
-                        {formatBudgetPeriod(budget.month, budget.year)}
+                        {selectedPeriod === 'all' ? 'All Time' : formatBudgetPeriod(budget.month, budget.year)}
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">Monthly Limit</p>

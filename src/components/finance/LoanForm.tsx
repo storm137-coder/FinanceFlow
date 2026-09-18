@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loanSchema, LoanFormData } from '@/validations/schemas';
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loan } from '@/types';
 import { toMinorUnits, fromMinorUnits } from '@/lib/currency';
+import { Calculator } from 'lucide-react';
 
 interface LoanFormProps {
   onSuccess?: () => void;
@@ -23,8 +24,13 @@ export function LoanForm({ onSuccess, initialData, defaultCurrency = 'INR' }: Lo
   const { mutateAsync: updateLoan } = useUpdateLoan();
   const { mutateAsync: deleteLoan } = useDeleteLoan();
   const [isLoading, setIsLoading] = useState(false);
+  const [isAutoCalc, setIsAutoCalc] = useState(!initialData || !initialData.monthlyEmiMinorUnits);
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm({
+  const initialEmi = initialData?.monthlyEmiMinorUnits 
+    ? fromMinorUnits(initialData.monthlyEmiMinorUnits, defaultCurrency) 
+    : 0;
+
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(loanSchema),
     defaultValues: initialData ? {
       name: initialData.name,
@@ -33,6 +39,7 @@ export function LoanForm({ onSuccess, initialData, defaultCurrency = 'INR' }: Lo
       interestRate: initialData.interestRate,
       durationYears: Math.floor(initialData.totalInstallments / 12),
       durationMonths: initialData.totalInstallments % 12,
+      monthlyEmi: initialEmi > 0 ? Number(initialEmi.toFixed(2)) : 0,
       startDate: initialData.startDate,
       paidInstallments: initialData.paidInstallments,
       lender: initialData.lender || '',
@@ -44,17 +51,18 @@ export function LoanForm({ onSuccess, initialData, defaultCurrency = 'INR' }: Lo
       interestRate: 0,
       durationYears: 1,
       durationMonths: 0,
+      monthlyEmi: 0,
       startDate: new Date().toISOString().split('T')[0],
       paidInstallments: 0,
     }
   });
 
   // Watch fields for EMI auto-calculation
-  const borrowedAmount = useWatch({ control: control, name: 'borrowedAmount' });
-  const remainingAmount = useWatch({ control: control, name: 'remainingAmount' });
-  const interestRate = useWatch({ control: control, name: 'interestRate' });
-  const durationYears = useWatch({ control: control, name: 'durationYears' });
-  const durationMonths = useWatch({ control: control, name: 'durationMonths' });
+  const borrowedAmount = useWatch({ control, name: 'borrowedAmount' });
+  const remainingAmount = useWatch({ control, name: 'remainingAmount' });
+  const interestRate = useWatch({ control, name: 'interestRate' });
+  const durationYears = useWatch({ control, name: 'durationYears' });
+  const durationMonths = useWatch({ control, name: 'durationMonths' });
 
   const years = parseInt(String(durationYears) || '0', 10) || 0;
   const months = parseInt(String(durationMonths) || '0', 10) || 0;
@@ -79,7 +87,22 @@ export function LoanForm({ onSuccess, initialData, defaultCurrency = 'INR' }: Lo
     }
   }
 
-  const onSubmit = async (data: LoanFormData) => {
+  // Update monthlyEmi automatically when auto-calculate is active
+  useEffect(() => {
+    if (isAutoCalc && calculatedEmi > 0) {
+      setValue('monthlyEmi', Number(calculatedEmi.toFixed(2)), { shouldValidate: true });
+    }
+  }, [isAutoCalc, calculatedEmi, setValue]);
+
+  const handleRecalculateAuto = () => {
+    setIsAutoCalc(true);
+    if (calculatedEmi > 0) {
+      setValue('monthlyEmi', Number(calculatedEmi.toFixed(2)), { shouldValidate: true });
+      toast.info('EMI recalculated automatically');
+    }
+  };
+
+  const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
       const parsedYears = parseInt(String(data.durationYears) || '0', 10);
@@ -92,12 +115,16 @@ export function LoanForm({ onSuccess, initialData, defaultCurrency = 'INR' }: Lo
       endDateObj.setMonth(endDateObj.getMonth() + totalInstallments);
       const endDateStr = endDateObj.toISOString().split('T')[0];
 
+      const emiToSave = (data.monthlyEmi !== undefined && data.monthlyEmi !== null && data.monthlyEmi > 0)
+        ? data.monthlyEmi
+        : calculatedEmi;
+
       const payload = {
         name: data.name,
         borrowedAmountMinorUnits: toMinorUnits(data.borrowedAmount, defaultCurrency),
         remainingAmountMinorUnits: toMinorUnits(data.remainingAmount, defaultCurrency),
         interestRate: data.interestRate,
-        monthlyEmiMinorUnits: toMinorUnits(calculatedEmi, defaultCurrency),
+        monthlyEmiMinorUnits: toMinorUnits(emiToSave, defaultCurrency),
         startDate: data.startDate,
         endDate: endDateStr,
         paidInstallments: data.paidInstallments,
@@ -165,10 +192,39 @@ export function LoanForm({ onSuccess, initialData, defaultCurrency = 'INR' }: Lo
           {errors.interestRate && <p className="text-sm text-destructive">{errors.interestRate.message}</p>}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="monthlyEmi">Monthly Payment (Auto-Calculated)</Label>
-          <div className="flex h-10 w-full rounded-md border border-input bg-surface-sunken px-3 py-2 text-sm text-muted-foreground items-center">
-            {new Intl.NumberFormat('en-US', { style: 'currency', currency: defaultCurrency }).format(calculatedEmi)}
+          <div className="flex items-center justify-between">
+            <Label htmlFor="monthlyEmi" className="flex items-center gap-1.5">
+              Monthly Payment
+              <span className={`text-[11px] px-1.5 py-0.5 rounded font-medium ${
+                isAutoCalc 
+                  ? 'bg-primary/20 text-primary border border-primary/30' 
+                  : 'bg-muted text-muted-foreground border border-border'
+              }`}>
+                {isAutoCalc ? 'Auto' : 'Manual'}
+              </span>
+            </Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+              onClick={handleRecalculateAuto}
+              title="Recalculate EMI automatically"
+            >
+              <Calculator className="h-3 w-3" />
+              Auto
+            </Button>
           </div>
+          <Input 
+            id="monthlyEmi" 
+            type="number" 
+            step="0.01" 
+            {...register('monthlyEmi', {
+              onChange: () => setIsAutoCalc(false),
+            })} 
+            placeholder="0.00"
+          />
+          {errors.monthlyEmi && <p className="text-sm text-destructive">{errors.monthlyEmi.message}</p>}
         </div>
       </div>
 

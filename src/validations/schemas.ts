@@ -82,15 +82,15 @@ export const loanSchema = z.object({
   remainingAmount: z.coerce.number({ message: 'Remaining amount is required' }).min(0).max(100000000000, 'Amount cannot exceed 100 billion'),
   interestRate: z.coerce.number({ message: 'Interest rate is required' }).min(0).max(100),
   durationYears: z.coerce.number().min(0).default(0),
-  durationMonths: z.coerce.number().min(0).max(11).default(0),
-  monthlyEmi: z.coerce.number().optional(), // Auto-calculated
+  durationMonths: z.coerce.number().min(0).max(1200).default(0),
+  monthlyEmi: z.coerce.number().min(0).optional(),
   startDate: z.string().trim().min(1, 'Start date is required').max(50),
   endDate: z.string().trim().max(50).optional(), // Auto-calculated
   paidInstallments: z.coerce.number().min(0).default(0),
   totalInstallments: z.coerce.number().optional(), // Auto-calculated
   lender: z.string().trim().max(100).optional(),
   notes: z.string().trim().max(500).optional(),
-}).refine(data => data.durationYears > 0 || data.durationMonths > 0, {
+}).refine(data => (data.durationYears || 0) > 0 || (data.durationMonths || 0) > 0, {
   message: "Duration must be greater than 0",
   path: ["durationMonths"]
 });

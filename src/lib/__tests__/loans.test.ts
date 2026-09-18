@@ -59,6 +59,31 @@ describe('generateAmortizationSchedule', () => {
     expect(totalPrincipalPaid).toBe(100000);
   });
 
+  it('handles custom/manual monthly payment correctly for 0% interest loan', () => {
+    // $6,000 at 0% over 12 months with custom payment of $600/month (60000 minor units)
+    const summary = generateAmortizationSchedule(600000, 0, 12, 60000);
+    
+    expect(summary.monthlyPaymentMinorUnits).toBe(60000);
+    expect(summary.totalInterestMinorUnits).toBe(0);
+    // Loan pays off in 10 months because $600 * 10 = $6,000
+    expect(summary.schedule.length).toBe(10);
+    expect(summary.schedule[9].remainingBalanceMinorUnits).toBe(0);
+  });
+
+  it('handles custom/manual monthly payment correctly for interest-bearing loan', () => {
+    // $10,000 at 5% over 60 months with custom payment of $200.00/month (20000 minor units)
+    const summary = generateAmortizationSchedule(1000000, 5, 60, 20000);
+    
+    expect(summary.monthlyPaymentMinorUnits).toBe(20000);
+    expect(summary.schedule[0].paymentMinorUnits).toBe(20000);
+    expect(summary.schedule[0].interestPaymentMinorUnits).toBe(4167);
+    expect(summary.schedule[0].principalPaymentMinorUnits).toBe(15833);
+    
+    // Check that loan clears to 0
+    const lastRow = summary.schedule[summary.schedule.length - 1];
+    expect(lastRow.remainingBalanceMinorUnits).toBe(0);
+  });
+
   it('throws an error if principal or term are invalid', () => {
     expect(() => generateAmortizationSchedule(0, 5, 60)).toThrow('Principal must be greater than zero');
     expect(() => generateAmortizationSchedule(10000, 5, 0)).toThrow('Term must be greater than zero');

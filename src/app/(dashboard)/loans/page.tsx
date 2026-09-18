@@ -126,7 +126,8 @@ export default function LoansPage() {
               scheduleSummary = generateAmortizationSchedule(
                 loan.borrowedAmountMinorUnits,
                 loan.interestRate,
-                loan.totalInstallments
+                loan.totalInstallments,
+                loan.monthlyEmiMinorUnits
               );
             } catch (e) {
               console.error('Failed to generate schedule', e);

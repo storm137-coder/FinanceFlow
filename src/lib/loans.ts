@@ -19,12 +19,14 @@ export interface AmortizationSummary {
  * @param principalMinorUnits The total amount borrowed (in minor units, e.g., cents)
  * @param annualInterestRate The annual interest rate as a percentage (e.g., 5 for 5%)
  * @param termMonths The total number of months for the loan
+ * @param customMonthlyPaymentMinorUnits Optional custom/manual monthly payment in minor units
  * @returns An object containing the monthly payment, totals, and the full schedule
  */
 export function generateAmortizationSchedule(
   principalMinorUnits: number,
   annualInterestRate: number,
-  termMonths: number
+  termMonths: number,
+  customMonthlyPaymentMinorUnits?: number
 ): AmortizationSummary {
   if (principalMinorUnits <= 0) {
     throw new Error('Principal must be greater than zero');
@@ -35,14 +37,16 @@ export function generateAmortizationSchedule(
 
   // Handle 0% interest case
   if (annualInterestRate === 0) {
-    const monthlyPayment = Math.round(principalMinorUnits / termMonths);
+    const monthlyPayment = customMonthlyPaymentMinorUnits && customMonthlyPaymentMinorUnits > 0
+      ? customMonthlyPaymentMinorUnits
+      : Math.round(principalMinorUnits / termMonths);
     const schedule: AmortizationScheduleItem[] = [];
     let remainingBalance = principalMinorUnits;
 
     for (let month = 1; month <= termMonths; month++) {
       let principalPayment = monthlyPayment;
       
-      // Adjust last payment for rounding errors
+      // Adjust last payment for rounding errors or when balance is less than payment
       if (month === termMonths || remainingBalance < monthlyPayment) {
         principalPayment = remainingBalance;
       }
@@ -54,8 +58,10 @@ export function generateAmortizationSchedule(
         paymentMinorUnits: principalPayment,
         principalPaymentMinorUnits: principalPayment,
         interestPaymentMinorUnits: 0,
-        remainingBalanceMinorUnits: remainingBalance,
+        remainingBalanceMinorUnits: Math.max(0, remainingBalance),
       });
+
+      if (remainingBalance <= 0) break;
     }
 
     return {
@@ -71,7 +77,9 @@ export function generateAmortizationSchedule(
   // Standard Amortization Formula: P * (r(1+r)^n) / ((1+r)^n - 1)
   const mathPow = Math.pow(1 + monthlyInterestRate, termMonths);
   const rawMonthlyPayment = principalMinorUnits * (monthlyInterestRate * mathPow) / (mathPow - 1);
-  const monthlyPaymentMinorUnits = Math.round(rawMonthlyPayment);
+  const monthlyPaymentMinorUnits = customMonthlyPaymentMinorUnits && customMonthlyPaymentMinorUnits > 0
+    ? customMonthlyPaymentMinorUnits
+    : Math.round(rawMonthlyPayment);
 
   let remainingBalance = principalMinorUnits;
   let totalInterest = 0;
@@ -82,15 +90,11 @@ export function generateAmortizationSchedule(
     const interestPayment = Math.round(remainingBalance * monthlyInterestRate);
     
     // Principal is whatever is left from the fixed monthly payment
-    let principalPayment = monthlyPaymentMinorUnits - interestPayment;
+    let principalPayment = Math.max(0, monthlyPaymentMinorUnits - interestPayment);
     let actualPayment = monthlyPaymentMinorUnits;
 
     // Handle the final month to clear any rounding discrepancies
-    if (month === termMonths) {
-      principalPayment = remainingBalance;
-      actualPayment = principalPayment + interestPayment;
-    } else if (remainingBalance < principalPayment) {
-      // Edge case if rounding somehow causes early payoff
+    if (month === termMonths || remainingBalance <= principalPayment) {
       principalPayment = remainingBalance;
       actualPayment = principalPayment + interestPayment;
     }
